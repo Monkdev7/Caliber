@@ -50,7 +50,7 @@ def scrape_linkedin_jobs(keyword: str, location: str, max_pages: int = 1):
             try:
                 urn_string = job_card.get("data-entity-urn")
                 if urn_string:
-                    job_id = urn_string.split(":")[-1]
+                    job_id = str(urn_string).split(":")[-1]
                     all_job_ids.append(job_id)
             except Exception as e:
                 print(f"Skipping a job card due to error: {e}")
