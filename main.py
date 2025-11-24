@@ -1,7 +1,7 @@
 from linkedin import scrape_linkedin_jobs 
 
 JOB_KEYWORD = 'data science'  
-JOB_LOCATION = 'Pune'        
+JOB_LOCATION = 'Pune'
 PAGES_TO_GET = 1
 
 print(f"Starting scrape for '{JOB_KEYWORD}' jobs in '{JOB_LOCATION}'...")
