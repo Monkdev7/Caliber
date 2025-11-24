@@ -4,9 +4,8 @@ import pandas as pd
 import time
 import random
 from concurrent.futures import ThreadPoolExecutor
-import re # Make sure 're' is imported at the top for clarity
+import re
 
-# --- 1. Wrap the entire scraping logic in a function ---
 def scrape_linkedin_jobs(keyword: str, location: str, max_pages: int = 1):
     """
     Scrapes job postings from LinkedIn based on keyword and location.
@@ -22,7 +21,6 @@ def scrape_linkedin_jobs(keyword: str, location: str, max_pages: int = 1):
     
     all_job_ids = []
     
-    # --- Loop through pages ---
     for page_num in range(max_pages):
         start_param = page_num * 25 
         
@@ -117,7 +115,6 @@ def scrape_linkedin_jobs(keyword: str, location: str, max_pages: int = 1):
             # To mimic human behaviour
             time.sleep(random.uniform(2, 5))
 
-    # --- Scraping with ThreadPoolExecutor ---
     with ThreadPoolExecutor(max_workers=5) as executor:
         results = [result for result in executor.map(scrape_job, all_job_ids) if result is not None]
         job_list.extend(results)
