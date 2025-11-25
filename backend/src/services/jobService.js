@@ -87,7 +87,7 @@ class JobService {
   async getJobs(filters = {}, options = {}) {
     const {
       page = 1,
-      limit = 20,
+      limit = 60,
       sortBy = 'scrapedAt',
       sortOrder = 'desc',
     } = options;
@@ -98,26 +98,30 @@ class JobService {
     if (filters.source) query.source = filters.source;
     if (filters.company) query.company = new RegExp(filters.company, 'i');
     if (filters.search) {
-      query.$text = { $search: filters.search };
+      query.$text = { $search: filters.search }; // Full-text search
     }
 
     const skip = (page - 1) * limit;
     const sort = { [sortBy]: sortOrder === 'desc' ? -1 : 1 };
 
-    const [jobs, total] = await Promise.all([
-      Job.find(query).sort(sort).skip(skip).limit(limit).lean(),
-      Job.countDocuments(query),
-    ]);
+    try {
+      const [jobs, total] = await Promise.all([
+        Job.find(query).sort(sort).skip(skip).limit(limit).lean(),
+        Job.countDocuments(query),
+      ]);
 
-    return {
-      jobs,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
-      },
-    };
+      return {
+        jobs,
+        pagination: {
+          page,
+          limit,
+          total,
+          pages: Math.ceil(total / limit),
+        },
+      };
+    } catch (err) {
+      throw new Error('Error fetching jobs from database');
+    }
   }
 
   /**
