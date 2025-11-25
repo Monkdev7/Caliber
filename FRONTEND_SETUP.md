@@ -3,6 +3,7 @@
 ## Quick Start
 
 ### 1. Install Dependencies
+
 ```bash
 cd frontend
 npm install
@@ -11,7 +12,9 @@ pnpm install
 ```
 
 ### 2. Install Tailwind CSS Dependencies
+
 The package.json has been updated with:
+
 - `tailwindcss` - Utility-first CSS framework
 - `postcss` - CSS processing
 - `autoprefixer` - Vendor prefixes
@@ -19,11 +22,13 @@ The package.json has been updated with:
 These are automatically installed with `npm install`.
 
 ### 3. Configure Environment
+
 ```bash
 cp .env.example .env.local
 ```
 
 ### 4. Start Development Server
+
 ```bash
 npm run dev
 ```
@@ -52,29 +57,34 @@ frontend/
 ## Features Implemented
 
 ✅ **Modern UI**
+
 - Tailwind CSS with custom theme
 - Responsive grid layouts
 - Smooth animations and transitions
 - Professional color scheme
 
 ✅ **Job Search**
+
 - Real-time search input
 - Advanced filter panel (title, company, location, source)
 - CSV export functionality
 
 ✅ **Job Display**
+
 - Beautiful job cards with all details
 - Job statistics dashboard
 - Empty state messaging
 - Loading indicators
 
 ✅ **API Integration**
+
 - Axios configured for backend communication
 - Environment variable support
 - Error handling with user feedback
 - Vite proxy for development
 
 ✅ **Responsive Design**
+
 - Mobile-first approach
 - Tablet and desktop optimizations
 - Touch-friendly buttons
@@ -97,6 +107,7 @@ npm run lint         # Check code with ESLint
 ## Component Overview
 
 ### Header Component
+
 - Logo and branding
 - Desktop navigation menu
 - Mobile hamburger menu
@@ -104,6 +115,7 @@ npm run lint         # Check code with ESLint
 - Responsive design
 
 ### JobCard Component
+
 - Displays job title, company, location
 - Shows salary, experience, and posting date
 - Source badge (LinkedIn/Naukri)
@@ -111,6 +123,7 @@ npm run lint         # Check code with ESLint
 - Hover effects and animations
 
 ### FilterPanel Component
+
 - Filter by job title
 - Filter by company name
 - Filter by location
@@ -119,6 +132,7 @@ npm run lint         # Check code with ESLint
 - Responsive grid layout
 
 ### App Component
+
 - State management for jobs and filters
 - API calls to fetch and scrape jobs
 - Search functionality
@@ -129,6 +143,7 @@ npm run lint         # Check code with ESLint
 ## Styling Details
 
 ### Tailwind CSS Features Used
+
 - Responsive breakpoints (sm, md, lg)
 - Gradient backgrounds
 - Shadow effects
@@ -137,17 +152,20 @@ npm run lint         # Check code with ESLint
 - Grid and flex layouts
 
 ### Custom Classes
+
 ```css
 .btn-primary      /* Blue action button */
+/* Blue action button */
 .btn-secondary    /* Gray secondary button */
 .card             /* White card with shadow */
-.input-field      /* Styled form input */
+.input-field; /* Styled form input */
 ```
 
 ### Animations
+
 ```css
 @keyframes fadeIn    /* 0.3s fade-in effect */
-@keyframes slideUp   /* 0.3s slide up effect */
+@keyframes slideUp; /* 0.3s slide up effect */
 ```
 
 ## Environment Variables
@@ -178,18 +196,22 @@ VITE_API_URL=http://localhost:5000/api
 ## Troubleshooting
 
 ### API Not Connecting
+
 1. Make sure backend is running on port 5000
 2. Check `VITE_API_URL` in `.env.local`
 3. Check browser console for CORS errors
 4. Ensure backend API endpoints are correct
 
 ### Styling Not Applied
+
 1. Clear `node_modules` and reinstall: `rm -rf node_modules && npm install`
 2. Restart dev server: `npm run dev`
 3. Hard refresh browser: `Ctrl+Shift+R` (Windows/Linux) or `Cmd+Shift+R` (Mac)
 
 ### Port Already in Use
+
 If port 5173 is in use:
+
 1. Kill the process: `lsof -i :5173` then `kill -9 <PID>`
 2. Or edit `vite.config.js` to use a different port
 
@@ -211,6 +233,7 @@ If port 5173 is in use:
 ## Browser DevTools
 
 Use React Developer Tools extension:
+
 - Inspect component hierarchy
 - Check state and props
 - Track re-renders
@@ -225,6 +248,7 @@ npm run build
 This creates an optimized `dist/` folder ready for deployment.
 
 Deploy to:
+
 - Vercel
 - Netlify
 - GitHub Pages
@@ -233,6 +257,7 @@ Deploy to:
 ## Support
 
 For issues or questions, check:
+
 1. Console errors in browser DevTools
 2. Network tab for API calls
 3. Component props and state

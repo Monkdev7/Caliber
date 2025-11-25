@@ -5,22 +5,26 @@ A modern, responsive React + Vite frontend for the Caliber job scraping applicat
 ## Features
 
 ✨ **Modern UI/UX**
+
 - Clean, professional design with gradient backgrounds
 - Fully responsive (mobile, tablet, desktop)
 - Smooth animations and transitions
 - Dark mode ready
 
 🔍 **Job Search & Filtering**
+
 - Real-time search across job titles and companies
 - Advanced filtering by title, company, location, and source
 - Toggle filters on/off with a single click
 
 📊 **Data Management**
+
 - Display scraped jobs from multiple sources (LinkedIn, Naukri)
 - Export jobs to CSV format
 - Statistics dashboard showing total jobs, sources, and companies
 
 🚀 **Scraping Controls**
+
 - One-click job scraping for LinkedIn and Naukri
 - Loading states and error handling
 - Real-time updates
@@ -43,11 +47,13 @@ A modern, responsive React + Vite frontend for the Caliber job scraping applicat
 ### Installation
 
 1. Navigate to the frontend directory:
+
 ```bash
 cd frontend
 ```
 
 2. Install dependencies:
+
 ```bash
 npm install
 # or
@@ -55,11 +61,13 @@ pnpm install
 ```
 
 3. Create `.env.local` file (copy from `.env.example`):
+
 ```bash
 cp .env.example .env.local
 ```
 
 4. Update API URL in `.env.local` if needed:
+
 ```
 VITE_API_URL=http://localhost:5000/api
 ```
@@ -67,6 +75,7 @@ VITE_API_URL=http://localhost:5000/api
 ### Development
 
 Start the development server:
+
 ```bash
 npm run dev
 # or
@@ -78,6 +87,7 @@ The app will be available at `http://localhost:5173`
 ### Build
 
 Build for production:
+
 ```bash
 npm run build
 # or
@@ -85,6 +95,7 @@ pnpm build
 ```
 
 Preview the production build:
+
 ```bash
 npm run preview
 # or
@@ -94,6 +105,7 @@ pnpm preview
 ### Linting
 
 Check code with ESLint:
+
 ```bash
 npm run lint
 # or
@@ -138,18 +150,21 @@ The frontend communicates with the backend API at the URL specified in `VITE_API
 const response = await axios.get(`${API_URL}/jobs`);
 
 // Trigger scraping
-const response = await axios.post(`${API_URL}/scrape`, { 
-  source: 'linkedin' // or 'naukri'
+const response = await axios.post(`${API_URL}/scrape`, {
+  source: "linkedin", // or 'naukri'
 });
 ```
 
 ## Components
 
 ### Header
+
 Navigation component with logo and scrape buttons. Responsive design for mobile and desktop.
 
 ### JobCard
+
 Displays individual job with:
+
 - Job title and company
 - Location, salary, experience level
 - Posted date
@@ -157,7 +172,9 @@ Displays individual job with:
 - Apply link
 
 ### FilterPanel
+
 Advanced filtering options:
+
 - Filter by job title
 - Filter by company
 - Filter by location

@@ -14,25 +14,26 @@ Then open: **http://localhost:5173**
 
 ## 📁 File Locations
 
-| File | Purpose |
-|------|---------|
-| `src/App.jsx` | Main app, state management |
-| `src/components/Header.jsx` | Navigation bar |
-| `src/components/JobCard.jsx` | Job display card |
-| `src/components/FilterPanel.jsx` | Search filters |
-| `src/App.css` | Animations |
-| `src/index.css` | Tailwind styles |
-| `vite.config.js` | Vite config + API proxy |
-| `tailwind.config.js` | Tailwind theme |
+| File                             | Purpose                    |
+| -------------------------------- | -------------------------- |
+| `src/App.jsx`                    | Main app, state management |
+| `src/components/Header.jsx`      | Navigation bar             |
+| `src/components/JobCard.jsx`     | Job display card           |
+| `src/components/FilterPanel.jsx` | Search filters             |
+| `src/App.css`                    | Animations                 |
+| `src/index.css`                  | Tailwind styles            |
+| `vite.config.js`                 | Vite config + API proxy    |
+| `tailwind.config.js`             | Tailwind theme             |
 
 ---
 
 ## 🎯 Key Features
 
 ### Search
+
 ```jsx
 // Real-time search for jobs
-<input 
+<input
   value={searchTerm}
   onChange={(e) => setSearchTerm(e.target.value)}
   placeholder="Search jobs by title or company..."
@@ -40,26 +41,29 @@ Then open: **http://localhost:5173**
 ```
 
 ### Filter
+
 ```jsx
 // Advanced filtering
 filters = {
-  title: '',
-  company: '',
-  location: '',
-  source: 'all'
-}
+  title: "",
+  company: "",
+  location: "",
+  source: "all",
+};
 ```
 
 ### Export
+
 ```jsx
 // Export filtered jobs to CSV
-exportToCSV() // Downloads jobs-YYYY-MM-DD.csv
+exportToCSV(); // Downloads jobs-YYYY-MM-DD.csv
 ```
 
 ### Scrape
+
 ```jsx
 // Trigger job scraping
-triggerScrape('linkedin')  // or 'naukri'
+triggerScrape("linkedin"); // or 'naukri'
 ```
 
 ---
@@ -96,13 +100,17 @@ App.jsx (Main)
 ## 🔧 Customization
 
 ### Change API URL
+
 Edit `.env.local`:
+
 ```env
 VITE_API_URL=http://your-backend:5000/api
 ```
 
 ### Change Colors
+
 Edit `tailwind.config.js`:
+
 ```javascript
 theme: {
   extend: {
@@ -115,15 +123,17 @@ theme: {
 ```
 
 ### Add More Filters
+
 Edit `src/App.jsx` and `FilterPanel.jsx`:
+
 ```jsx
 // Add to filters state
 const [filters, setFilters] = useState({
-  title: '',
-  company: '',
-  location: '',
-  source: 'all',
-  salary: '', // NEW
+  title: "",
+  company: "",
+  location: "",
+  source: "all",
+  salary: "", // NEW
 });
 ```
 
@@ -146,19 +156,19 @@ const [filters, setFilters] = useState({...})     // Filter values
 
 ## 🔗 API Endpoints
 
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| GET | `/api/jobs` | Fetch all jobs |
-| POST | `/api/scrape` | Trigger scraping |
+| Method | Endpoint      | Purpose          |
+| ------ | ------------- | ---------------- |
+| GET    | `/api/jobs`   | Fetch all jobs   |
+| POST   | `/api/scrape` | Trigger scraping |
 
 ### Example Calls
 
 ```javascript
 // Fetch jobs
-axios.get(`${API_URL}/jobs`)
+axios.get(`${API_URL}/jobs`);
 
 // Scrape jobs
-axios.post(`${API_URL}/scrape`, { source: 'linkedin' })
+axios.post(`${API_URL}/scrape`, { source: "linkedin" });
 ```
 
 ---
@@ -166,22 +176,26 @@ axios.post(`${API_URL}/scrape`, { source: 'linkedin' })
 ## 🎨 Tailwind Classes Used
 
 ### Buttons
+
 ```jsx
 <button className="btn-primary">Primary</button>
 <button className="btn-secondary">Secondary</button>
 ```
 
 ### Cards
+
 ```jsx
 <div className="card">Content</div>
 ```
 
 ### Inputs
+
 ```jsx
 <input className="input-field" />
 ```
 
 ### Layout
+
 ```jsx
 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 ```
@@ -192,38 +206,42 @@ axios.post(`${API_URL}/scrape`, { source: 'linkedin' })
 
 ```css
 .animate-fade-in      /* 0.3s fade-in */
-.animate-slide-up     /* 0.3s slide-up */
+/* 0.3s fade-in */
+.animate-slide-up; /* 0.3s slide-up */
 ```
 
 ---
 
 ## 📱 Responsive Breakpoints
 
-| Class | Size |
-|-------|------|
-| sm: | 640px and up |
-| md: | 768px and up |
-| lg: | 1024px and up |
-| xl: | 1280px and up |
+| Class | Size          |
+| ----- | ------------- |
+| sm:   | 640px and up  |
+| md:   | 768px and up  |
+| lg:   | 1024px and up |
+| xl:   | 1280px and up |
 
 ---
 
 ## 🐛 Debug Tips
 
 ### Check State
+
 ```javascript
-console.log('Jobs:', jobs)
-console.log('Filters:', filters)
-console.log('API URL:', API_URL)
+console.log("Jobs:", jobs);
+console.log("Filters:", filters);
+console.log("API URL:", API_URL);
 ```
 
 ### Check API
+
 ```javascript
 // Network tab in DevTools
 // Check request URL and response
 ```
 
 ### Check Rendering
+
 ```javascript
 // React DevTools extension
 // Inspect component tree and props
@@ -253,37 +271,40 @@ npm run lint         # Check code with ESLint
 
 ## 🆘 Common Issues
 
-| Problem | Solution |
-|---------|----------|
-| Styling not loading | Clear cache & restart: `npm run dev` |
-| API not connecting | Check backend is running on port 5000 |
-| Port 5173 in use | Change port in `vite.config.js` |
-| Components not showing | Check browser console for errors |
-| Filters not working | Verify job data has correct fields |
+| Problem                | Solution                              |
+| ---------------------- | ------------------------------------- |
+| Styling not loading    | Clear cache & restart: `npm run dev`  |
+| API not connecting     | Check backend is running on port 5000 |
+| Port 5173 in use       | Change port in `vite.config.js`       |
+| Components not showing | Check browser console for errors      |
+| Filters not working    | Verify job data has correct fields    |
 
 ---
 
 ## 📚 Component API
 
 ### Header Component
+
 ```jsx
 <Header onScrape={handleScrape} />
 ```
+
 **Props**: `onScrape` - Function called when scrape button clicked
 
 ### JobCard Component
+
 ```jsx
 <JobCard job={jobObject} />
 ```
+
 **Props**: `job` - Job object with title, company, location, etc.
 
 ### FilterPanel Component
+
 ```jsx
-<FilterPanel 
-  filters={filters} 
-  onFilterChange={handleFilterChange} 
-/>
+<FilterPanel filters={filters} onFilterChange={handleFilterChange} />
 ```
+
 **Props**: `filters`, `onFilterChange` - Current filters and callback
 
 ---
@@ -297,7 +318,7 @@ npm run lint         # Check code with ESLint
 ✅ Real-time filtering  
 ✅ Beautiful UI  
 ✅ Error handling  
-✅ Loading states  
+✅ Loading states
 
 ---
 

@@ -5,6 +5,7 @@ A full-stack job scraping application that collects job listings from multiple s
 ## Overview
 
 Caliber is a modern job scraping tool with:
+
 - 🕷️ **Web Scraping** - Extract jobs from LinkedIn and Naukri
 - 🎨 **Beautiful Frontend** - React + Vite with Tailwind CSS
 - 🔌 **Robust Backend** - Node.js/Express API
@@ -50,6 +51,7 @@ caliber/
 ## Tech Stack
 
 ### Frontend
+
 - **React 19** - UI framework
 - **Vite** - Build tool and dev server
 - **Tailwind CSS** - Utility-first styling
@@ -57,6 +59,7 @@ caliber/
 - **Axios** - HTTP client
 
 ### Backend
+
 - **Node.js** - Runtime environment
 - **Express** - Web framework
 - **MongoDB** - Database (optional)
@@ -64,6 +67,7 @@ caliber/
 - **Child Process** - Execute Python scripts
 
 ### Python Scrapers
+
 - **Selenium/BeautifulSoup** - Web scraping
 - **Requests** - HTTP library
 - **Pandas** - Data processing
@@ -71,6 +75,7 @@ caliber/
 ## Quick Start
 
 ### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/Monkdev7/Caliber.git
 cd Caliber
@@ -112,6 +117,7 @@ pip install -r requirements.txt
 ## Features
 
 ### Job Search & Filtering
+
 - 🔍 Search by job title or company
 - 🏢 Filter by company name
 - 📍 Filter by location
@@ -119,12 +125,14 @@ pip install -r requirements.txt
 - ⭐ View job statistics
 
 ### Data Management
+
 - 📥 Scrape jobs from multiple sources
 - 💾 Store jobs in database
 - 📥 Export jobs to CSV
 - 🔄 Real-time updates
 
 ### User Interface
+
 - 📱 Fully responsive design
 - ⚡ Fast and smooth interactions
 - 🎨 Modern, professional styling
@@ -133,6 +141,7 @@ pip install -r requirements.txt
 ## API Endpoints
 
 ### Jobs
+
 - `GET /api/jobs` - Fetch all jobs
 - `POST /api/jobs` - Create a new job
 - `GET /api/jobs/:id` - Get job by ID
@@ -140,17 +149,20 @@ pip install -r requirements.txt
 - `DELETE /api/jobs/:id` - Delete job
 
 ### Scraping
+
 - `POST /api/scrape` - Trigger scraping for a source
 - `GET /api/scrape/status` - Get scrape status
 
 ## Environment Variables
 
 ### Frontend (.env.local)
+
 ```env
 VITE_API_URL=http://localhost:5000/api
 ```
 
 ### Backend (.env)
+
 ```env
 PORT=5000
 MONGODB_URI=mongodb://localhost:27017/caliber
@@ -160,6 +172,7 @@ NODE_ENV=development
 ## Running the Application
 
 ### All Services
+
 ```bash
 # Terminal 1: Frontend
 cd frontend
@@ -175,6 +188,7 @@ python main.py
 ```
 
 ### Production Build
+
 ```bash
 # Frontend
 cd frontend
@@ -190,6 +204,7 @@ npm start
 ## Development
 
 ### Frontend Development
+
 ```bash
 cd frontend
 npm run dev          # Start dev server
@@ -198,6 +213,7 @@ npm run build        # Build for production
 ```
 
 ### Backend Development
+
 ```bash
 cd backend
 npm run dev          # Start with nodemon
@@ -206,6 +222,7 @@ npm test             # Run tests
 ```
 
 ### Python Scrapers
+
 ```bash
 python main.py       # Run main scraper
 python linkedin.py   # Run LinkedIn scraper only
@@ -215,6 +232,7 @@ python naukri.py     # Run Naukri scraper only
 ## Database Schema
 
 ### Jobs Collection
+
 ```javascript
 {
   _id: ObjectId,
@@ -244,21 +262,25 @@ python naukri.py     # Run Naukri scraper only
 ## Issues & Troubleshooting
 
 ### Frontend Won't Load
+
 1. Check if backend is running: `http://localhost:5000`
 2. Clear browser cache and hard refresh
 3. Check `.env.local` API URL
 
 ### API Connection Failed
+
 1. Verify backend is running
 2. Check CORS settings in backend
 3. Verify API URL in frontend `.env.local`
 
 ### Scraping Issues
+
 1. Check Python environment is activated
 2. Verify dependencies: `pip install -r requirements.txt`
 3. Check browser/scraper logs for errors
 
 ### Database Connection
+
 1. Ensure MongoDB is running
 2. Check connection string in backend `.env`
 3. Verify database credentials
@@ -281,6 +303,7 @@ python naukri.py     # Run Naukri scraper only
 ## Deployment
 
 ### Frontend Deployment
+
 Deploy to: Vercel, Netlify, GitHub Pages, etc.
 
 ```bash
@@ -289,6 +312,7 @@ npm run build
 ```
 
 ### Backend Deployment
+
 Deploy to: Heroku, Railway, Render, AWS, etc.
 
 ```bash
