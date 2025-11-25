@@ -1,14 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  Search,
-  Briefcase,
-  MapPin,
-  DollarSign,
-  Calendar,
-  Zap,
-  Filter,
-  Download,
-} from 'lucide-react';
+import { Search, Briefcase, Zap, Filter, Download } from 'lucide-react';
 import axios from 'axios';
 import Header from './components/Header';
 import JobCard from './components/JobCard';
@@ -67,7 +58,6 @@ function App() {
       const { jobs, pagination } = response.data.data;
 
       if (response.data.success && Array.isArray(response.data.data.jobs)) {
-        console.log(response);
         setJobs(jobs);
         setPagination(pagination);
       } else {
