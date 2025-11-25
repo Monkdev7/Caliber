@@ -4,31 +4,25 @@ import pandas as pd
 import time
 import random
 from concurrent.futures import ThreadPoolExecutor
-import re # Make sure 're' is imported at the top for clarity
+import re
+import json
+import sys
 
-# --- 1. Wrap the entire scraping logic in a function ---
 def scrape_linkedin_jobs(keyword: str, location: str, max_pages: int = 1):
     """
     Scrapes job postings from LinkedIn based on keyword and location.
-
-    Args:
-        keyword (str): The job keyword (e.g., 'fullstack').
-        location (str): The job location (e.g., 'Mumbai').
-        max_pages (int): The maximum number of pages to scrape (default is 1).
-
-    Returns:
-        pd.DataFrame: A DataFrame containing the scraped job data.
+    Returns JSON string for Node.js consumption.
     """
     
     all_job_ids = []
     
-    # --- Loop through pages ---
+    # Loop through pages
     for page_num in range(max_pages):
         start_param = page_num * 25 
         
         linkedin_job_url = f'https://www.linkedin.com/jobs/search?keywords={keyword}&location={location}&start={start_param}'
 
-        print(f"Fetching job listings for page {page_num + 1}...")
+        sys.stderr.write(f"Fetching job listings for page {page_num + 1}...\n")
         
         try:
             response = requests.get(linkedin_job_url)
@@ -36,14 +30,13 @@ def scrape_linkedin_jobs(keyword: str, location: str, max_pages: int = 1):
             job_data = response.text
             soup = BeautifulSoup(job_data, "lxml")
         except requests.exceptions.RequestException as e:
-            print(f"Failed to fetch job list page {page_num + 1}: {e}")
+            sys.stderr.write(f"Failed to fetch job list page {page_num + 1}: {e}\n")
             break
 
-        # Job cards on the current page
         page_jobs = soup.find_all('div', class_='job-search-card')
         
         if not page_jobs:
-            print(f"No jobs found on page {page_num + 1}. Stopping pagination.")
+            sys.stderr.write(f"No jobs found on page {page_num + 1}. Stopping pagination.\n")
             break
             
         for job_card in page_jobs:
@@ -53,13 +46,12 @@ def scrape_linkedin_jobs(keyword: str, location: str, max_pages: int = 1):
                     job_id = str(urn_string).split(":")[-1]
                     all_job_ids.append(job_id)
             except Exception as e:
-                print(f"Skipping a job card due to error: {e}")
+                sys.stderr.write(f"Skipping a job card due to error: {e}\n")
                 continue
         
-        # Add a small delay between page requests
         time.sleep(random.uniform(1, 3))
 
-    print(f"Total job IDs collected across {max_pages} page(s): {len(all_job_ids)}")
+    sys.stderr.write(f"Total job IDs collected: {len(all_job_ids)}\n")
     
     job_list = []
 
@@ -68,7 +60,12 @@ def scrape_linkedin_jobs(keyword: str, location: str, max_pages: int = 1):
         
         try:
             headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'en-US,en;q=0.5',
+    'Accept-Encoding': 'gzip, deflate',
+    'Connection': 'keep-alive',
+    'Upgrade-Insecure-Requests': '1'
             }
             job_response = requests.get(job_url, headers=headers)
             job_response.raise_for_status()
@@ -102,41 +99,39 @@ def scrape_linkedin_jobs(keyword: str, location: str, max_pages: int = 1):
                 if match:
                     job_post["num_applicants"] = int(match.group())
                 else:
-                    job_post["num_applicants"] = applicants_text
+                    job_post["num_applicants"] = 0
 
-            print(f"Successfully fetched job posting {job_id}")
+            sys.stderr.write(f"Successfully fetched job posting {job_id}\n")
             return job_post
 
-        except requests.exceptions.RequestException as e:
-            print(f"Failed to fetch job posting {job_id}: {e}")
-            return None
         except Exception as e:
-            print(f"An unexpected error occurred for job {job_id}: {e}")
+            sys.stderr.write(f"Failed to fetch job posting {job_id}: {e}\n")
             return None
         finally:
-            # To mimic human behaviour
             time.sleep(random.uniform(2, 5))
 
-    # --- Scraping with ThreadPoolExecutor ---
+    # Scraping with ThreadPoolExecutor
     with ThreadPoolExecutor(max_workers=5) as executor:
         results = [result for result in executor.map(scrape_job, all_job_ids) if result is not None]
         job_list.extend(results)
 
-    print("Scraping complete.")
-
-    return pd.DataFrame(job_list)
+    sys.stderr.write("Scraping complete.\n")
+    
+    return job_list
 
 if __name__ == "__main__":
-    TEST_KEYWORD = 'fullstack'  
-    TEST_LOCATION = 'Mumbai'   
-    PAGES_TO_SCRAPE = 1
-
-    print(f"Starting test scrape for {TEST_KEYWORD} in {TEST_LOCATION}...")
+    # Accept command line arguments from Node.js
+    if len(sys.argv) < 3:
+        sys.stderr.write("Usage: python linkedin.py <keyword> <location> [max_pages]\n")
+        sys.exit(1)
     
-    final_df = scrape_linkedin_jobs(
-        keyword=TEST_KEYWORD, 
-        location=TEST_LOCATION, 
-        max_pages=PAGES_TO_SCRAPE
-    )
+    keyword = sys.argv[1]
+    location = sys.argv[2]
+    max_pages = int(sys.argv[3]) if len(sys.argv) > 3 else 1
     
-    print(final_df)
+    sys.stderr.write(f"Starting LinkedIn scrape: {keyword} in {location}\n")
+    
+    jobs = scrape_linkedin_jobs(keyword, location, max_pages)
+    
+    # Output JSON to stdout for Node.js to capture
+    print(json.dumps(jobs, ensure_ascii=False, indent=2))
