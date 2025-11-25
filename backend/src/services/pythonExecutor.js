@@ -1,10 +1,14 @@
-const { spawn } = require('child_process');
-const path = require('path');
+import { spawn } from 'child_process';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 class PythonExecutor {
   constructor() {
     this.pythonPath = process.env.PYTHON_PATH || 'python3';
-    this.scriptsDir = path.join(__dirname, '../../../'); // Root directory
+    this.scriptsDir = join(__dirname, '../../../'); // Root directory
   }
 
   /**
@@ -15,7 +19,7 @@ class PythonExecutor {
    * @returns {Promise<Array>} Array of job objects
    */
   async scrapeLinkedIn(keyword, location, maxPages = 1) {
-    const scriptPath = path.join(this.scriptsDir, 'linkedin.py');
+    const scriptPath = join(this.scriptsDir, 'linkedin.py');
 
     return new Promise((resolve, reject) => {
       const args = [scriptPath, keyword, location, maxPages.toString()];
@@ -24,18 +28,20 @@ class PythonExecutor {
       let dataString = '';
       let errorString = '';
 
-      python.stdout.on('data', (data) => {
+      python.stdout.on('data', data => {
         dataString += data.toString();
       });
 
-      python.stderr.on('data', (data) => {
+      python.stderr.on('data', data => {
         errorString += data.toString();
         console.error(`Python stderr: ${data}`);
       });
 
-      python.on('close', (code) => {
+      python.on('close', code => {
         if (code !== 0) {
-          reject(new Error(`Python script exited with code ${code}: ${errorString}`));
+          reject(
+            new Error(`Python script exited with code ${code}: ${errorString}`)
+          );
           return;
         }
 
@@ -48,7 +54,7 @@ class PythonExecutor {
         }
       });
 
-      python.on('error', (error) => {
+      python.on('error', error => {
         reject(new Error(`Failed to start Python process: ${error.message}`));
       });
     });
@@ -61,7 +67,7 @@ class PythonExecutor {
    * @returns {Promise<Array>} Array of job objects
    */
   async scrapeNaukri(keyword, location) {
-    const scriptPath = path.join(this.scriptsDir, 'naukri.py');
+    const scriptPath = join(this.scriptsDir, 'naukri.py');
 
     return new Promise((resolve, reject) => {
       const args = [scriptPath, keyword, location];
@@ -70,18 +76,20 @@ class PythonExecutor {
       let dataString = '';
       let errorString = '';
 
-      python.stdout.on('data', (data) => {
+      python.stdout.on('data', data => {
         dataString += data.toString();
       });
 
-      python.stderr.on('data', (data) => {
+      python.stderr.on('data', data => {
         errorString += data.toString();
         console.error(`Python stderr: ${data}`);
       });
 
-      python.on('close', (code) => {
+      python.on('close', code => {
         if (code !== 0) {
-          reject(new Error(`Python script exited with code ${code}: ${errorString}`));
+          reject(
+            new Error(`Python script exited with code ${code}: ${errorString}`)
+          );
           return;
         }
 
@@ -93,11 +101,11 @@ class PythonExecutor {
         }
       });
 
-      python.on('error', (error) => {
+      python.on('error', error => {
         reject(new Error(`Failed to start Python process: ${error.message}`));
       });
     });
   }
 }
 
-module.exports = new PythonExecutor();
+export default new PythonExecutor();

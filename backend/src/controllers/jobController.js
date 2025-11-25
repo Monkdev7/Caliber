@@ -1,4 +1,4 @@
-const jobService = require('../services/jobService');
+import jobService from '../services/jobService.js';
 
 class JobController {
   /**
@@ -9,21 +9,21 @@ class JobController {
       const filters = {
         source: req.query.source,
         company: req.query.company,
-        search: req.query.search
+        search: req.query.search,
       };
 
       const options = {
         page: parseInt(req.query.page) || 1,
         limit: parseInt(req.query.limit) || 20,
         sortBy: req.query.sortBy || 'scrapedAt',
-        sortOrder: req.query.sortOrder || 'desc'
+        sortOrder: req.query.sortOrder || 'desc',
       };
 
       const result = await jobService.getJobs(filters, options);
 
       res.status(200).json({
         success: true,
-        data: result
+        data: result,
       });
     } catch (error) {
       next(error);
@@ -40,13 +40,13 @@ class JobController {
       if (!job) {
         return res.status(404).json({
           success: false,
-          error: 'Job not found'
+          error: 'Job not found',
         });
       }
 
       res.status(200).json({
         success: true,
-        data: job
+        data: job,
       });
     } catch (error) {
       next(error);
@@ -62,7 +62,7 @@ class JobController {
 
       res.status(200).json({
         success: true,
-        data: stats
+        data: stats,
       });
     } catch (error) {
       next(error);
@@ -80,7 +80,7 @@ class JobController {
       res.status(200).json({
         success: true,
         message: `Deleted ${deletedCount} jobs older than ${daysOld} days`,
-        data: { deletedCount }
+        data: { deletedCount },
       });
     } catch (error) {
       next(error);
@@ -88,4 +88,4 @@ class JobController {
   }
 }
 
-module.exports = new JobController();
+export default new JobController();

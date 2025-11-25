@@ -1,4 +1,4 @@
-const Job = require('../models/jobs');
+import Job from '../models/jobs.js';
 
 class JobService {
   /**
@@ -13,7 +13,7 @@ class JobService {
       inserted: 0,
       updated: 0,
       failed: 0,
-      errors: []
+      errors: [],
     };
 
     for (const jobData of jobs) {
@@ -23,7 +23,7 @@ class JobService {
         // Check if job exists first
         const existingJob = await Job.findOne({
           jobId: mappedJob.jobId,
-          source: mappedJob.source
+          source: mappedJob.source,
         });
 
         await Job.upsertJob(mappedJob);
@@ -37,7 +37,7 @@ class JobService {
         results.failed++;
         results.errors.push({
           jobId: jobData.job_id || jobData.jobId,
-          error: error.message
+          error: error.message,
         });
       }
     }
@@ -58,18 +58,20 @@ class JobService {
         company: jobData.company_name,
         source: 'linkedin',
         timePosted: jobData.time_posted,
-        numApplicants: jobData.num_applicants
+        numApplicants: jobData.num_applicants,
       };
     } else if (source === 'naukri') {
       return {
-        jobId: jobData.job_id || `naukri_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        jobId:
+          jobData.job_id ||
+          `naukri_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         title: jobData.job_title,
         company: jobData.company_name,
         source: 'naukri',
         location: jobData.location,
         experienceRequired: jobData.experience_required,
         description: jobData.job_description,
-        jobUrl: jobData.job_url
+        jobUrl: jobData.job_url,
       };
     }
 
@@ -87,7 +89,7 @@ class JobService {
       page = 1,
       limit = 20,
       sortBy = 'scrapedAt',
-      sortOrder = 'desc'
+      sortOrder = 'desc',
     } = options;
 
     const query = { isActive: true };
@@ -103,12 +105,8 @@ class JobService {
     const sort = { [sortBy]: sortOrder === 'desc' ? -1 : 1 };
 
     const [jobs, total] = await Promise.all([
-      Job.find(query)
-        .sort(sort)
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Job.countDocuments(query)
+      Job.find(query).sort(sort).skip(skip).limit(limit).lean(),
+      Job.countDocuments(query),
     ]);
 
     return {
@@ -117,8 +115,8 @@ class JobService {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     };
   }
 
@@ -141,7 +139,7 @@ class JobService {
     cutoffDate.setDate(cutoffDate.getDate() - daysOld);
 
     const result = await Job.deleteMany({
-      scrapedAt: { $lt: cutoffDate }
+      scrapedAt: { $lt: cutoffDate },
     });
 
     return result.deletedCount;
@@ -156,12 +154,12 @@ class JobService {
       Job.countDocuments({ isActive: true }),
       Job.aggregate([
         { $match: { isActive: true } },
-        { $group: { _id: '$source', count: { $sum: 1 } } }
+        { $group: { _id: '$source', count: { $sum: 1 } } },
       ]),
       Job.countDocuments({
         isActive: true,
-        scrapedAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
-      })
+        scrapedAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+      }),
     ]);
 
     return {
@@ -170,9 +168,9 @@ class JobService {
         acc[item._id] = item.count;
         return acc;
       }, {}),
-      last24Hours: recent
+      last24Hours: recent,
     };
   }
 }
 
-module.exports = new JobService();
+export default new JobService();

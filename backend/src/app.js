@@ -1,17 +1,17 @@
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
+import express from 'express';
+import cors from 'cors';
+import pkg from 'body-parser';
+import jobRoutes from './routes/jobRoutes.js';
+import scrapeRoutes from './routes/scrapeRoutes.js';
+import errorHandler from './middleware/errorHandler.js';
 
-const jobRoutes = require('./routes/jobRoutes');
-const scrapeRoutes = require('./routes/scrapeRoutes');
-const errorHandler = require('./middleware/errorHandler');
-
+const { json, urlencoded } = pkg;
 const app = express();
 
 // Middleware
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(json());
+app.use(urlencoded({ extended: true }));
 
 // Request logging
 app.use((req, res, next) => {
@@ -24,7 +24,7 @@ app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'OK',
     timestamp: new Date().toISOString(),
-    uptime: process.uptime()
+    uptime: process.uptime(),
   });
 });
 
@@ -40,4 +40,4 @@ app.use((req, res) => {
 // Error handler
 app.use(errorHandler);
 
-module.exports = app;
+export default app;

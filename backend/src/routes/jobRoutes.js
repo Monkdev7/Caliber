@@ -1,7 +1,6 @@
-// src/routes/jobRoutes.js
-const express = require('express');
-const router = express.Router();
-const jobController = require('../controllers/jobController');
+import { Router } from 'express';
+const router = Router();
+import jobController from '../controllers/jobController.js';
 
 // GET /api/jobs - Get all jobs with filters
 router.get('/', jobController.getJobs.bind(jobController));
@@ -15,4 +14,4 @@ router.get('/:id', jobController.getJobById.bind(jobController));
 // DELETE /api/jobs/old - Delete old jobs
 router.delete('/old', jobController.deleteOldJobs.bind(jobController));
 
-module.exports = router;
+export default router;

@@ -1,5 +1,5 @@
-const pythonExecutor = require('../services/pythonExecutor');
-const jobService = require('../services/jobService');
+import pythonExecutor from '../services/pythonExecutor.js';
+import jobService from '../services/jobService.js';
 
 class ScrapeController {
   /**
@@ -13,26 +13,32 @@ class ScrapeController {
       if (!keyword || !location) {
         return res.status(400).json({
           success: false,
-          error: 'Keyword and location are required'
+          error: 'Keyword and location are required',
         });
       }
 
       if (maxPages < 1 || maxPages > 10) {
         return res.status(400).json({
           success: false,
-          error: 'maxPages must be between 1 and 10'
+          error: 'maxPages must be between 1 and 10',
         });
       }
 
       console.log(`🔍 Starting LinkedIn scrape: ${keyword} in ${location}`);
 
       // Execute Python scraper
-      const jobs = await pythonExecutor.scrapeLinkedIn(keyword, location, maxPages);
+      const jobs = await pythonExecutor.scrapeLinkedIn(
+        keyword,
+        location,
+        maxPages
+      );
 
       // Save to database
       const saveResults = await jobService.saveJobs(jobs, 'linkedin');
 
-      console.log(`✅ LinkedIn scrape completed: ${saveResults.inserted} new, ${saveResults.updated} updated`);
+      console.log(
+        `✅ LinkedIn scrape completed: ${saveResults.inserted} new, ${saveResults.updated} updated`
+      );
 
       res.status(200).json({
         success: true,
@@ -41,8 +47,8 @@ class ScrapeController {
           keyword,
           location,
           maxPages,
-          results: saveResults
-        }
+          results: saveResults,
+        },
       });
     } catch (error) {
       console.error('❌ LinkedIn scrape error:', error.message);
@@ -61,7 +67,7 @@ class ScrapeController {
       if (!keyword || !location) {
         return res.status(400).json({
           success: false,
-          error: 'Keyword and location are required'
+          error: 'Keyword and location are required',
         });
       }
 
@@ -73,7 +79,9 @@ class ScrapeController {
       // Save to database
       const saveResults = await jobService.saveJobs(jobs, 'naukri');
 
-      console.log(`✅ Naukri scrape completed: ${saveResults.inserted} new, ${saveResults.updated} updated`);
+      console.log(
+        `✅ Naukri scrape completed: ${saveResults.inserted} new, ${saveResults.updated} updated`
+      );
 
       res.status(200).json({
         success: true,
@@ -81,8 +89,8 @@ class ScrapeController {
         data: {
           keyword,
           location,
-          results: saveResults
-        }
+          results: saveResults,
+        },
       });
     } catch (error) {
       console.error('❌ Naukri scrape error:', error.message);
@@ -100,20 +108,26 @@ class ScrapeController {
       if (!keyword || !location) {
         return res.status(400).json({
           success: false,
-          error: 'Keyword and location are required'
+          error: 'Keyword and location are required',
         });
       }
 
-      console.log(`🔍 Starting scrape from all sources: ${keyword} in ${location}`);
+      console.log(
+        `🔍 Starting scrape from all sources: ${keyword} in ${location}`
+      );
 
       const results = {
         linkedin: null,
-        naukri: null
+        naukri: null,
       };
 
       // Scrape LinkedIn
       try {
-        const linkedInJobs = await pythonExecutor.scrapeLinkedIn(keyword, location, maxPages);
+        const linkedInJobs = await pythonExecutor.scrapeLinkedIn(
+          keyword,
+          location,
+          maxPages
+        );
         results.linkedin = await jobService.saveJobs(linkedInJobs, 'linkedin');
       } catch (error) {
         console.error('LinkedIn scrape failed:', error.message);
@@ -137,8 +151,8 @@ class ScrapeController {
         data: {
           keyword,
           location,
-          results
-        }
+          results,
+        },
       });
     } catch (error) {
       console.error('❌ Multi-source scrape error:', error.message);
@@ -147,4 +161,4 @@ class ScrapeController {
   }
 }
 
-module.exports = new ScrapeController();
+export default new ScrapeController();
