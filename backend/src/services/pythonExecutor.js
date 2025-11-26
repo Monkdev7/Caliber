@@ -5,106 +5,78 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+/**
+ * Helper: Run a Python script via `uv run`
+ * Guaranteed to work with your uv environment.
+ */
+function runPython(scriptPath, args = []) {
+  return new Promise((resolve, reject) => {
+    const python = spawn('uv', ['run', scriptPath, ...args]);
+
+    let stdout = '';
+    let stderr = '';
+
+    python.stdout.on('data', data => {
+      stdout += data.toString();
+    });
+
+    python.stderr.on('data', data => {
+      stderr += data.toString();
+      console.error(`🐍 Python stderr: ${data}`);
+    });
+
+    python.on('close', code => {
+      if (code !== 0) {
+        return reject(
+          new Error(
+            `Python script failed with exit code ${code}\n${
+              stderr || 'No stderr'
+            }`
+          )
+        );
+      }
+
+      try {
+        const parsed = JSON.parse(stdout);
+        resolve(parsed);
+      } catch (err) {
+        reject(
+          new Error(
+            `Failed to parse Python JSON output:\n${err.message}\nOUTPUT:\n${stdout}`
+          )
+        );
+      }
+    });
+
+    python.on('error', err => {
+      reject(new Error(`Failed to start Python process: ${err.message}`));
+    });
+  });
+}
+
 class PythonExecutor {
   constructor() {
-    this.pythonPath = process.env.PYTHON_PATH || 'python3';
-    this.scriptsDir = join(__dirname, '../../../'); // Root directory
+    this.scriptsDir = join(__dirname, '../../../'); // Root project folder
   }
 
   /**
-   * Execute LinkedIn scraper
-   * @param {string} keyword - Job keyword
-   * @param {string} location - Job location
-   * @param {number} maxPages - Number of pages to scrape
-   * @returns {Promise<Array>} Array of job objects
+   * Run LinkedIn scraper
    */
   async scrapeLinkedIn(keyword, location, maxPages = 1) {
     const scriptPath = join(this.scriptsDir, 'linkedin.py');
+    console.log(`🚀 Running LinkedIn scraper using uv…`);
 
-    return new Promise((resolve, reject) => {
-      const args = [scriptPath, keyword, location, maxPages.toString()];
-      const python = spawn(this.pythonPath, args);
-
-      let dataString = '';
-      let errorString = '';
-
-      python.stdout.on('data', data => {
-        dataString += data.toString();
-      });
-
-      python.stderr.on('data', data => {
-        errorString += data.toString();
-        console.error(`Python stderr: ${data}`);
-      });
-
-      python.on('close', code => {
-        if (code !== 0) {
-          reject(
-            new Error(`Python script exited with code ${code}: ${errorString}`)
-          );
-          return;
-        }
-
-        try {
-          // Parse JSON output from Python
-          const jobs = JSON.parse(dataString);
-          resolve(jobs);
-        } catch (error) {
-          reject(new Error(`Failed to parse Python output: ${error.message}`));
-        }
-      });
-
-      python.on('error', error => {
-        reject(new Error(`Failed to start Python process: ${error.message}`));
-      });
-    });
+    return runPython(scriptPath, [keyword, location, maxPages.toString()]);
   }
 
   /**
-   * Execute Naukri scraper
-   * @param {string} keyword - Job keyword
-   * @param {string} location - Job location
-   * @returns {Promise<Array>} Array of job objects
+   * Run Naukri scraper
    */
   async scrapeNaukri(keyword, location) {
     const scriptPath = join(this.scriptsDir, 'naukri.py');
+    console.log(`🚀 Running Naukri scraper using uv…`);
 
-    return new Promise((resolve, reject) => {
-      const args = [scriptPath, keyword, location];
-      const python = spawn(this.pythonPath, args);
-
-      let dataString = '';
-      let errorString = '';
-
-      python.stdout.on('data', data => {
-        dataString += data.toString();
-      });
-
-      python.stderr.on('data', data => {
-        errorString += data.toString();
-        console.error(`Python stderr: ${data}`);
-      });
-
-      python.on('close', code => {
-        if (code !== 0) {
-          reject(
-            new Error(`Python script exited with code ${code}: ${errorString}`)
-          );
-          return;
-        }
-
-        try {
-          const jobs = JSON.parse(dataString);
-          resolve(jobs);
-        } catch (error) {
-          reject(new Error(`Failed to parse Python output: ${error.message}`));
-        }
-      });
-
-      python.on('error', error => {
-        reject(new Error(`Failed to start Python process: ${error.message}`));
-      });
-    });
+    return runPython(scriptPath, [keyword, location]);
   }
 }
 
