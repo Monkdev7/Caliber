@@ -1,148 +1,106 @@
-import json
-import os
-import sys
-import time
-from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.firefox.service import Service
-from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
-from selenium.common.exceptions import (
-    StaleElementReferenceException,
-    NoSuchElementException,
-)
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from concurrent.futures import ThreadPoolExecutor
+from bs4 import BeautifulSoup
 
-load_dotenv()
+firefox_options = Options()
+firefox_options.add_argument("--headless")
+firefox_options.add_argument("--disable-gpu")
+firefox_options.add_argument("--no-sandbox")
 
+geckodriver_path = (
+    "/home/makima/Desktop/Salenium Driver/geckodriver-v0.36.0-linux64/geckodriver"
+)
+firefox_binary_path = (
+    "/home/makima/Desktop/firefox-131.0a1.en-US.linux-x86_64/firefox/firefox"
+)
 
-# Helper function to handle retries
-def retry(func, retries=3, delay=2):
-    for i in range(retries):
-        try:
-            return func()
-        except Exception as e:
-            if i == retries - 1:
-                raise e
-            time.sleep(delay)
+firefox_options.binary_location = firefox_binary_path
 
+service = Service(geckodriver_path)
+driver = webdriver.Firefox(service=service, options=firefox_options)
 
-# Function to initialize the WebDriver
-def init_driver():
-    gecko_driver_path = os.environ.get("GECKO_DRIVER_PATH")
-    firefox_binary_path = os.environ.get("FIREFOX_BINARY")
+base_url = "https://www.naukri.com/fullstack-jobs-in-pune?k=fullstack&l=pune"
 
-    if not firefox_binary_path:
-        raise ValueError("FIREFOX_BINARY environment variable not set")
+driver.get(base_url)
 
-    options = Options()
-    options.binary_location = firefox_binary_path
+WebDriverWait(driver, 10).until(
+    EC.presence_of_element_located((By.CSS_SELECTOR, "h2 > a.title"))
+)
 
-    service = Service(executable_path=gecko_driver_path)
-    driver = webdriver.Firefox(service=service, options=options)
-    return driver
+page_html = driver.page_source
 
+soup = BeautifulSoup(page_html, "lxml")
 
-# Helper function to safely extract text from a selector
-def safe_wait(driver, selector, wait_time=10):
-    try:
-        wait = WebDriverWait(driver, wait_time)
-        el = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
-        return el.text.strip() if el.text.strip() else "Not available"
-    except (NoSuchElementException, StaleElementReferenceException, TimeoutError):
-        return "Not available"
+job_links = []
 
+job_listings = soup.select("h2 > a.title")
+for job in job_listings:
+    job_url = job.get("href")
+    if job_url:
+        job_links.append(job_url)
 
-# Function to scrape details from a single job page
-def scrape_job_details(driver, job_url):
-    job_data = {
-        "job_link": job_url,
-        "job_id": job_url.split("/")[-1] if job_url else "Not available",
-        "job_title": "Not available",
-        "company_name": "Not available",
-        "time_posted": "Not available",
-        "num_applicants": "Not available",
-        "experience_required": "Not available",
-    }
+print(f"Found {len(job_links)} job URLs:")
+for job_url in job_links:
+    print(job_url)
 
-    try:
-        driver.get(job_url)
+job_data = []
+for job_url in job_links:
+    driver.get(job_url)
 
-        # Wait for each element to load and extract data
-        job_data["job_title"] = safe_wait(driver, "h1.styles_jd-header-title__rZwM1")
-        job_data["company_name"] = safe_wait(
-            driver, "div.styles_jd-header-comp-name__MvqAI > a.title"
-        )
-        job_data["experience_required"] = safe_wait(
-            driver, "div.styles_jhc__exp__k_giM > span"
-        )
-        job_data["time_posted"] = safe_wait(
-            driver, "span.styles_jhc__stat__PgY67 > span"
-        )
-        job_data["num_applicants"] = safe_wait(
-            driver, "span.styles_jhc__stat__PgY67 > span"
-        )
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, "section#job_header"))
+    )
 
-    except Exception as e:
-        sys.stderr.write(f"Error scraping {job_url}: {str(e)}\n")
+    page_html = driver.page_source
+    soup = BeautifulSoup(page_html, "lxml")
 
-    return job_data
+    job_title = soup.select_one("h1.styles_jd-header-title__rZwM1")
+    company_name = soup.select_one("div.styles_jd-header-comp-name__MvqAI > a")
+    job_location = soup.select_one(
+        "div.styles_jhc__loc___Du2H span.styles_jhc__location__W_pVs"
+    )
+    job_experience = soup.select_one(
+        "div.styles_jhc__exp-salary-container__NXsVd div.styles_jhc__exp__k_giM span"
+    )
+    salary = soup.select_one(
+        "div.styles_jhc__exp-salary-container__NXsVd div.styles_jhc__salary__jdfEC span"
+    )
+    wfh_mode = soup.select_one("div.styles_jhc__wfhmode__iQwF4 span")
 
+    job_title = job_title.get_text(strip=True) if job_title else "No Title"
+    company_name = company_name.get_text(strip=True) if company_name else "No Company"
+    job_location = job_location.get_text(strip=True) if job_location else "No Location"
+    job_experience = (
+        job_experience.get_text(strip=True) if job_experience else "No Experience"
+    )
+    salary = salary.get_text(strip=True) if salary else "Not Disclosed"
+    wfh_mode = wfh_mode.get_text(strip=True) if wfh_mode else "No Work From Home Info"
 
-# Function to scrape Naukri job listings based on a keyword and location
-def scrape_naukri_jobs(keyword, location):
-    # Initialize driver
-    driver = init_driver()
-    jobs = []
+    job_data.append(
+        {
+            "job_url": job_url,
+            "job_title": job_title,
+            "company_name": company_name,
+            "job_location": job_location,
+            "job_experience": job_experience,
+            "salary": salary,
+            "wfh_mode": wfh_mode,
+        }
+    )
 
-    try:
-        # Construct the job search URL
-        url = f"https://www.naukri.com/{keyword}-jobs-in-{location}?k={keyword}&l={location}&experience=0"
-        driver.get(url)
-        time.sleep(5)
+print("\nScraped Job Data:")
+for job in job_data:
+    print(f"Job URL: {job['job_url']}")
+    print(f"Job Title: {job['job_title']}")
+    print(f"Company Name: {job['company_name']}")
+    print(f"Location: {job['job_location']}")
+    print(f"Experience: {job['job_experience']}")
+    print(f"Salary: {job['salary']}")
+    print(f"Work From Home: {job['wfh_mode']}")
+    print("-" * 40)
 
-        # Collect all job links
-        links = driver.find_elements(By.CSS_SELECTOR, "a.title")
-        job_urls = [
-            href for href in (link.get_attribute("href") for link in links) if href
-        ]
-
-        sys.stderr.write(f"Found {len(job_urls)} job URLs\n")
-
-        # Scrape job details in parallel with ThreadPoolExecutor
-        with ThreadPoolExecutor(max_workers=5) as executor:
-            futures = [
-                executor.submit(scrape_job_details, driver, job_url)
-                for job_url in job_urls
-            ]
-            for future in futures:
-                jobs.append(future.result())
-
-    except Exception as e:
-        sys.stderr.write(f"Error while scraping job listings: {str(e)}\n")
-    finally:
-        driver.quit()
-
-    return jobs
-
-
-# Main script execution
-if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        sys.stderr.write("Usage: python naukri.py <keyword> <location>\n")
-        sys.exit(1)
-
-    keyword = sys.argv[1]
-    location = sys.argv[2]
-
-    sys.stderr.write(f"Starting Naukri scrape: {keyword} in {location}\n")
-
-    try:
-        # Scrape jobs and print the results in JSON format
-        jobs = scrape_naukri_jobs(keyword, location)
-        print(json.dumps(jobs, ensure_ascii=False, indent=2))
-    except Exception as e:
-        sys.stderr.write(f"Error: {str(e)}\n")
-        sys.exit(1)
+driver.quit()
