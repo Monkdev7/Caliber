@@ -5,52 +5,55 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from bs4 import BeautifulSoup
+import pandas as pd
 
-firefox_options = Options()
-firefox_options.add_argument("--headless")
-firefox_options.add_argument("--disable-gpu")
-firefox_options.add_argument("--no-sandbox")
 
-geckodriver_path = (
-    "/home/makima/Desktop/Salenium Driver/geckodriver-v0.36.0-linux64/geckodriver"
-)
-firefox_binary_path = (
-    "/home/makima/Desktop/firefox-131.0a1.en-US.linux-x86_64/firefox/firefox"
-)
+def setup_driver():
+    """Sets up the Selenium WebDriver."""
+    firefox_options = Options()
+    firefox_options.add_argument("--headless")
+    firefox_options.add_argument("--disable-gpu")
+    firefox_options.add_argument("--no-sandbox")
 
-firefox_options.binary_location = firefox_binary_path
+    geckodriver_path = (
+        "/home/makima/Desktop/Salenium Driver/geckodriver-v0.36.0-linux64/geckodriver"
+    )
+    # Path to the Firefox binary
+    firefox_binary_path = (
+        "/home/makima/Desktop/firefox-131.0a1.en-US.linux-x86_64/firefox/firefox"
+    )
 
-service = Service(geckodriver_path)
-driver = webdriver.Firefox(service=service, options=firefox_options)
+    firefox_options.binary_location = firefox_binary_path
 
-base_url = "https://www.naukri.com/fullstack-jobs-in-pune?k=fullstack&l=pune"
+    service = Service(geckodriver_path)
+    driver = webdriver.Firefox(service=service, options=firefox_options)
 
-driver.get(base_url)
+    return driver
 
-WebDriverWait(driver, 10).until(
-    EC.presence_of_element_located((By.CSS_SELECTOR, "h2 > a.title"))
-)
 
-page_html = driver.page_source
+def get_job_links(driver, url):
+    """Job URLs from the search page."""
+    driver.get(url)
+    WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, "h2 > a.title"))
+    )
 
-soup = BeautifulSoup(page_html, "lxml")
+    page_html = driver.page_source
+    soup = BeautifulSoup(page_html, "lxml")
 
-job_links = []
+    job_links = []
+    job_listings = soup.select("h2 > a.title")
+    for job in job_listings:
+        job_url = job.get("href")
+        if job_url:
+            job_links.append(job_url)
 
-job_listings = soup.select("h2 > a.title")
-for job in job_listings:
-    job_url = job.get("href")
-    if job_url:
-        job_links.append(job_url)
+    return job_links
 
-print(f"Found {len(job_links)} job URLs:")
-for job_url in job_links:
-    print(job_url)
 
-job_data = []
-for job_url in job_links:
+def scrape_job_details(job_url, driver):
+    """Job details from an individual jobs."""
     driver.get(job_url)
-
     WebDriverWait(driver, 10).until(
         EC.presence_of_element_located((By.CSS_SELECTOR, "section#job_header"))
     )
@@ -58,6 +61,7 @@ for job_url in job_links:
     page_html = driver.page_source
     soup = BeautifulSoup(page_html, "lxml")
 
+    # Extract job details
     job_title = soup.select_one("h1.styles_jd-header-title__rZwM1")
     company_name = soup.select_one("div.styles_jd-header-comp-name__MvqAI > a")
     job_location = soup.select_one(
@@ -71,36 +75,45 @@ for job_url in job_links:
     )
     wfh_mode = soup.select_one("div.styles_jhc__wfhmode__iQwF4 span")
 
-    job_title = job_title.get_text(strip=True) if job_title else "No Title"
-    company_name = company_name.get_text(strip=True) if company_name else "No Company"
-    job_location = job_location.get_text(strip=True) if job_location else "No Location"
-    job_experience = (
-        job_experience.get_text(strip=True) if job_experience else "No Experience"
+    job_data = {
+        "job_title": job_title.get_text(strip=True) if job_title else "No Title",
+        "company_name": (
+            company_name.get_text(strip=True) if company_name else "No Company"
+        ),
+        "job_location": (
+            job_location.get_text(strip=True) if job_location else "No Location"
+        ),
+        "job_experience": (
+            job_experience.get_text(strip=True) if job_experience else "No Experience"
+        ),
+        "salary": salary.get_text(strip=True) if salary else "Not Disclosed",
+        "wfh_mode": (
+            wfh_mode.get_text(strip=True) if wfh_mode else "No Work From Home Info"
+        ),
+    }
+
+    return job_data
+
+
+def scrape_naukri_jobs(keyword, location, max_pages=1):
+    base_url = (
+        f"https://www.naukri.com/fullstack-jobs-in-{location}?k={keyword}&l={location}"
     )
-    salary = salary.get_text(strip=True) if salary else "Not Disclosed"
-    wfh_mode = wfh_mode.get_text(strip=True) if wfh_mode else "No Work From Home Info"
 
-    job_data.append(
-        {
-            "job_url": job_url,
-            "job_title": job_title,
-            "company_name": company_name,
-            "job_location": job_location,
-            "job_experience": job_experience,
-            "salary": salary,
-            "wfh_mode": wfh_mode,
-        }
-    )
+    driver = setup_driver()
 
-print("\nScraped Job Data:")
-for job in job_data:
-    print(f"Job URL: {job['job_url']}")
-    print(f"Job Title: {job['job_title']}")
-    print(f"Company Name: {job['company_name']}")
-    print(f"Location: {job['job_location']}")
-    print(f"Experience: {job['job_experience']}")
-    print(f"Salary: {job['salary']}")
-    print(f"Work From Home: {job['wfh_mode']}")
-    print("-" * 40)
+    try:
+        job_details = []
+        for page in range(1, max_pages + 1):
+            url = base_url.format(keyword=keyword, location=location)
+            job_links = get_job_links(driver, url)
 
-driver.quit()
+            for job_url in job_links:
+                job_data = scrape_job_details(job_url, driver)
+                job_details.append(job_data)
+
+        df = pd.DataFrame(job_details)
+        return df.to_dict(orient="records")
+
+    finally:
+        driver.quit()
