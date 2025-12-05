@@ -1,0 +1,69 @@
+services:
+  next-app:
+    container_name: next-app
+    build:
+      context: ./next-app
+      dockerfile: dev.Dockerfile
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/mydb
+    volumes:
+      - ./next-app/src:/app/src
+      - ./next-app/public:/app/public
+    ports:
+      - '3000:3000'
+    depends_on:
+      - postgres\
+    develop:
+      watch:
+        # Src
+        - action: sync
+          path: ./next-app/src
+          target: /app/src
+          initial_sync: true
+          ignore:
+            - node_modules/
+
+        # Public
+        - action: sync
+          path: ./next-app/public
+          target: /app/public
+          ignore:
+            - node_modules/
+
+        # Rebuild: package.json changes
+        - action: rebuild
+          path: ./next-app/package.json
+          target: /app/package.json
+
+        # Rebuild: pnpm-lock.yaml or package-lock.json changes
+        - action: rebuild
+          path: ./next-app/pnpm-lock.yaml
+          target: /app/pnpm-lock.yaml
+        - action: rebuild
+          path: ./next-app/package-lock.json
+          target: /app/package-lock.json
+
+        # Restart: next.config.ts, tsconfig.json, or postcss.config.mjs
+        - action: sync+restart
+          path: ./next-app/next.config.ts
+          target: /app/next.config.ts
+        - action: sync+restart
+          path: ./next-app/tsconfig.json
+          target: /app/tsconfig.json
+        - action: sync+restart
+          path: ./next-app/postcss.config.mjs
+          target: /app/postcss.config.mjs
+
+  postgres:
+    image: postgres:alpine3.23
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
