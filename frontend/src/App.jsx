@@ -37,10 +37,12 @@ function App() {
     setError(null);
     try {
       const response = await axios.get(`${API_URL}/jobs`);
-      setJobs(response.data || []);
+      const jobsData = response.data.data?.jobs || response.data.data || response.data || [];
+      setJobs(Array.isArray(jobsData) ? jobsData : []);
     } catch (err) {
-      setError('Failed to fetch jobs. Please try again later.');
+      setError('Failed to fetch jobs. Make sure the backend is running on port 5000.');
       console.error('Error fetching jobs:', err);
+      setJobs([]);
     } finally {
       setLoading(false);
     }
@@ -49,12 +51,13 @@ function App() {
   const triggerScrape = async (source) => {
     try {
       setLoading(true);
-      const response = await axios.post(`${API_URL}/scrape`, { source });
-      if (response.data.success) {
-        fetchJobs();
+      const endpoint = source === 'naukri' ? 'naukri' : 'linkedin';
+      const response = await axios.post(`${API_URL}/scrape/${endpoint}`);
+      if (response.data) {
+        await fetchJobs();
       }
     } catch (err) {
-      setError(`Failed to scrape ${source} jobs.`);
+      setError(`Failed to scrape ${source} jobs: ${err.response?.data?.message || err.message}`);
       console.error('Error scraping:', err);
     } finally {
       setLoading(false);
