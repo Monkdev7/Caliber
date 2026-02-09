@@ -2,10 +2,8 @@ import Job from '../models/jobs.js';
 
 class JobService {
   /**
-   * Save multiple jobs to database
-   * @param {Array} jobs - Array of job objects
-   * @param {string} source - Job source (linkedin/naukri)
-   * @returns {Promise<Object>} Statistics about saved jobs
+   * Main entry point for saving scraped data.
+   * Uses BulkWrite for high performance.
    */
   async saveJobs(jobs, source) {
     const results = {
@@ -13,76 +11,60 @@ class JobService {
       inserted: 0,
       updated: 0,
       failed: 0,
-      errors: [],
     };
 
-    for (const jobData of jobs) {
-      try {
-        const mappedJob = this.mapJobData(jobData, source);
+    if (!jobs || jobs.length === 0) return results;
 
-        // Check if job exists first
-        const existingJob = await Job.findOne({
-          jobId: mappedJob.jobId,
-          source: mappedJob.source,
-        });
+    const bulkOps = jobs.map(jobData => {
+      const mapped = this.mapJobData(jobData, source);
+      return {
+        updateOne: {
+          // Unique identifier: Combination of ID and Source
+          filter: { jobId: mapped.jobId, source: mapped.source },
+          update: {
+            $set: {
+              ...mapped,
+              isActive: true,
+              scrapedAt: new Date(),
+            },
+          },
+          upsert: true,
+        },
+      };
+    });
 
-        await Job.upsertJob(mappedJob);
-
-        if (existingJob) {
-          results.updated++;
-        } else {
-          results.inserted++;
-        }
-      } catch (error) {
-        results.failed++;
-        results.errors.push({
-          jobId: jobData.job_id || jobData.jobId,
-          error: error.message,
-        });
-      }
+    try {
+      const outcome = await Job.bulkWrite(bulkOps);
+      results.inserted = outcome.upsertedCount;
+      results.updated = outcome.modifiedCount;
+    } catch (error) {
+      console.error(`❌ BulkWrite Error for ${source}:`, error.message);
+      results.failed = jobs.length;
     }
 
     return results;
   }
+
   /**
-   * Map Python job data to database schema
-   * @param {Object} jobData - Raw job data from Python
-   * @param {string} source - Job source
-   * @returns {Object} Mapped job data
+   * Maps Python snake_case keys to MongoDB camelCase keys.
+   * Matches your Python dict exactly.
    */
   mapJobData(jobData, source) {
-    if (source === 'linkedin') {
-      return {
-        jobId: jobData.job_id,
-        title: jobData.job_title,
-        company: jobData.company_name,
-        source: 'linkedin',
-        timePosted: jobData.time_posted,
-        numApplicants: jobData.num_applicants,
-      };
-    } else if (source === 'naukri') {
-      return {
-        jobId:
-          jobData.job_id ||
-          `naukri_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        title: jobData.job_title,
-        company: jobData.company_name,
-        source: 'naukri',
-        location: jobData.location,
-        experienceRequired: jobData.experience_required,
-        description: jobData.job_description,
-        jobUrl: jobData.job_url,
-      };
-    }
-
-    throw new Error(`Unknown source: ${source}`);
+    return {
+      jobId: String(jobData.job_id),
+      title: jobData.job_title || 'No Title',
+      company: jobData.company_name || 'No Company',
+      timePosted: jobData.time_posted || 'Recently',
+      numApplicants: parseInt(jobData.num_applicants) || 0,
+      jobUrl: jobData.job_link,
+      location: jobData.job_location || 'Remote/Not Specified',
+      salary: jobData.salary || 'Not Disclosed',
+      source: source, // 'linkedin' or 'naukri'
+    };
   }
 
   /**
-   * Get jobs with filters and pagination
-   * @param {Object} filters - Filter criteria
-   * @param {Object} options - Pagination options
-   * @returns {Promise<Object>} Jobs and pagination info
+   * Advanced query for the frontend
    */
   async getJobs(filters = {}, options = {}) {
     const {
@@ -91,89 +73,73 @@ class JobService {
       sortBy = 'scrapedAt',
       sortOrder = 'desc',
     } = options;
-
     const query = { isActive: true };
 
-    // Apply filters
     if (filters.source) query.source = filters.source;
-    if (filters.company) query.company = new RegExp(filters.company, 'i');
+
+    // Smart search across Title, Company, and Location
     if (filters.search) {
-      query.$text = { $search: filters.search }; // Full-text search
+      const searchRegex = new RegExp(filters.search, 'i');
+      query.$or = [
+        { title: searchRegex },
+        { company: searchRegex },
+        { location: searchRegex },
+      ];
     }
 
     const skip = (page - 1) * limit;
-    const sort = { [sortBy]: sortOrder === 'desc' ? -1 : 1 };
 
-    try {
-      const [jobs, total] = await Promise.all([
-        Job.find(query).sort(sort).skip(skip).limit(limit).lean(),
-        Job.countDocuments(query),
-      ]);
-
-      return {
-        jobs,
-        pagination: {
-          page,
-          limit,
-          total,
-          pages: Math.ceil(total / limit),
-        },
-      };
-    } catch (err) {
-      throw new Error('Error fetching jobs from database');
-    }
-  }
-
-  /**
-   * Get job by ID
-   * @param {string} id - Job ID
-   * @returns {Promise<Object>} Job object
-   */
-  async getJobById(id) {
-    return Job.findById(id).lean();
-  }
-
-  /**
-   * Delete old jobs
-   * @param {number} daysOld - Number of days old
-   * @returns {Promise<number>} Number of deleted jobs
-   */
-  async deleteOldJobs(daysOld = 30) {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - daysOld);
-
-    const result = await Job.deleteMany({
-      scrapedAt: { $lt: cutoffDate },
-    });
-
-    return result.deletedCount;
-  }
-
-  /**
-   * Get statistics
-   * @returns {Promise<Object>} Job statistics
-   */
-  async getStats() {
-    const [total, bySource, recent] = await Promise.all([
-      Job.countDocuments({ isActive: true }),
-      Job.aggregate([
-        { $match: { isActive: true } },
-        { $group: { _id: '$source', count: { $sum: 1 } } },
-      ]),
-      Job.countDocuments({
-        isActive: true,
-        scrapedAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
-      }),
+    const [jobs, total] = await Promise.all([
+      Job.find(query)
+        .sort({ [sortBy]: sortOrder === 'desc' ? -1 : 1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Job.countDocuments(query),
     ]);
 
     return {
-      total,
-      bySource: bySource.reduce((acc, item) => {
-        acc[item._id] = item.count;
-        return acc;
-      }, {}),
-      last24Hours: recent,
+      jobs,
+      pagination: {
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+      },
     };
+  }
+
+  async getStats() {
+    const stats = await Job.aggregate([
+      { $match: { isActive: true } },
+      {
+        $facet: {
+          counts: [{ $group: { _id: '$source', count: { $sum: 1 } } }],
+          recent: [
+            {
+              $match: {
+                scrapedAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+              },
+            },
+            { $count: 'count' },
+          ],
+        },
+      },
+    ]);
+
+    return {
+      bySource: stats[0].counts.reduce(
+        (acc, c) => ({ ...acc, [c._id]: c.count }),
+        {},
+      ),
+      newInLast24h: stats[0].recent[0]?.count || 0,
+    };
+  }
+
+  async deleteOldJobs(daysOld = 30) {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - daysOld);
+    const result = await Job.deleteMany({ scrapedAt: { $lt: cutoff } });
+    return result.deletedCount;
   }
 }
 

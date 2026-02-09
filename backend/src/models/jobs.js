@@ -62,7 +62,7 @@ const jobSchema = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Compound index for uniqueness across source
