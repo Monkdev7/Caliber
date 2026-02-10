@@ -30,7 +30,7 @@ function AuthLogin() {
         try {
             await mockLogin(values.email, values.password);
             console.info('Login successful (mock)', values.email);
-            
+
             // Redirect to dashboard after successful login
             navigate('/dashboard', { replace: true });
         } catch (error) {

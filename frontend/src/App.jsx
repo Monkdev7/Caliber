@@ -15,7 +15,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Homepage />} />
         <Route path="/jobs" element={<JobsHome />} />
-        
+
         {/* Protected Routes - Require Authentication */}
         <Route
           path="/dashboard"
@@ -25,7 +25,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        
+
         {/* Public Routes - Redirect to dashboard if already authenticated */}
         <Route
           path="/login"
@@ -43,11 +43,11 @@ function App() {
             </PublicRoute>
           }
         />
-        
+
         {/* Other Auth Pages */}
         <Route path="/forgot-password" element={<AuthForgotPassword />} />
         <Route path="/reset-password" element={<AuthResetPassword />} />
-        
+
         <Route path="/auth" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

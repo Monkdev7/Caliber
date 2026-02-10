@@ -36,7 +36,7 @@ function AuthSignup() {
     try {
       await mockSignup(values.fullName, values.email, values.password);
       console.info('Signup successful (mock)', values.email);
-      
+
       // Redirect to dashboard after successful signup
       navigate('/dashboard', { replace: true });
     } catch (error) {

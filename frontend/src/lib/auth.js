@@ -20,7 +20,7 @@ const AUTH_USER_KEY = 'caliber_mock_auth_user';
 export const mockLogin = async (email, password) => {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 300));
-    
+
     // Create mock token and user data
     const mockToken = `mock_token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const mockUser = {
@@ -29,11 +29,11 @@ export const mockLogin = async (email, password) => {
         id: `user_${Math.random().toString(36).substr(2, 9)}`,
         loginTime: new Date().toISOString(),
     };
-    
+
     // Store in localStorage
     localStorage.setItem(AUTH_TOKEN_KEY, mockToken);
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(mockUser));
-    
+
     return mockUser;
 };
 
@@ -47,7 +47,7 @@ export const mockLogin = async (email, password) => {
 export const mockSignup = async (fullName, email, password) => {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 300));
-    
+
     // Create mock token and user data
     const mockToken = `mock_token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const mockUser = {
@@ -56,11 +56,11 @@ export const mockSignup = async (fullName, email, password) => {
         id: `user_${Math.random().toString(36).substr(2, 9)}`,
         signupTime: new Date().toISOString(),
     };
-    
+
     // Store in localStorage
     localStorage.setItem(AUTH_TOKEN_KEY, mockToken);
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(mockUser));
-    
+
     return mockUser;
 };
 
@@ -88,7 +88,7 @@ export const isAuthenticated = () => {
 export const getCurrentUser = () => {
     const userStr = localStorage.getItem(AUTH_USER_KEY);
     if (!userStr) return null;
-    
+
     try {
         return JSON.parse(userStr);
     } catch (e) {
