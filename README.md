@@ -342,22 +342,3 @@ npm run build
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Contact & Support
-
-- **GitHub**: [Monkdev7/Caliber](https://github.com/Monkdev7/Caliber)
-- **Issues**: [GitHub Issues](https://github.com/Monkdev7/Caliber/issues)
-- **Author**: Monkdev7
-
-## Acknowledgments
-
-- React and Vite communities
-- Tailwind CSS team
-- Job boards for providing opportunities
-- All contributors
-
----
-
-**Happy job hunting! 🚀**
-
-Made with ❤️ by Monkdev7
