@@ -9,6 +9,10 @@ export default {
             colors: {
                 primary: '#3b82f6',
                 secondary: '#8b5cf6',
+                accent: '#4f46e5',
+            },
+            fontFamily: {
+                sans: ['"Inter"', 'system-ui', 'sans-serif'],
             },
             animation: {
                 'fade-in': 'fadeIn 0.3s ease-in',
@@ -27,4 +31,4 @@ export default {
         },
     },
     plugins: [],
-}
+};

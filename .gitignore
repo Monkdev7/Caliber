@@ -35,3 +35,4 @@ logs/
 *.sqlite3
 
 next-app/.next
+.github/
