@@ -210,8 +210,9 @@ function Dashboard() {
                     break;
                 case 'date':
                 default:
-                    compareA = new Date(a.scraped_at || a.posted_date || 0);
-                    compareB = new Date(b.scraped_at || b.posted_date || 0);
+                    // Use updatedAt or createdAt from backend for proper date sorting
+                    compareA = new Date(a.updatedAt || a.createdAt || a.scraped_at || a.posted_date || 0);
+                    compareB = new Date(b.updatedAt || b.createdAt || b.scraped_at || b.posted_date || 0);
                     break;
             }
 
@@ -233,7 +234,7 @@ function Dashboard() {
             title: '',
             company: '',
             location: '',
-            source: '',
+            source: 'all',
         });
         setShowFilters(false);
     };
@@ -250,7 +251,8 @@ function Dashboard() {
     };
 
     const hasActiveFilters = () => {
-        return searchTerm || filters.title || filters.company || filters.location || filters.source;
+        // Only check source filter now (title, company, location removed from UI)
+        return searchTerm || (filters.source && filters.source !== 'all');
     };
 
     const exportToCSV = () => {
@@ -270,7 +272,8 @@ function Dashboard() {
                 const location = job.location || 'N/A';
                 const salary = job.salary || 'Not disclosed';
                 const source = job.source || 'Unknown';
-                const jobUrl = job.url || job.job_url || job.link || 'N/A';
+                // Use correct backend field name: jobUrl (camelCase)
+                const jobUrl = job.jobUrl || job.url || job.job_url || job.link || 'N/A';
 
                 return [
                     `"${title.replace(/"/g, '""')}"`,
@@ -338,8 +341,8 @@ function Dashboard() {
                 {/* Search and Actions */}
                 <div className="mb-8">
                     <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                        {/* Search Bar */}
-                        <div className="flex-1 relative">
+                        {/* Search Bar - Wider for better UX */}
+                        <div className="flex-1 sm:min-w-[400px] relative">
                             <Search
                                 className="absolute left-3 top-3 text-slate-400"
                                 size={20}
@@ -347,7 +350,7 @@ function Dashboard() {
                             <input
                                 type="text"
                                 placeholder="Search by job title, company, or location..."
-                                className="auth-input pl-10 pr-10"
+                                className="auth-input pl-10 pr-10 w-full"
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
                             />
@@ -381,12 +384,12 @@ function Dashboard() {
                             <option value="location-desc">Location Z-A</option>
                         </select>
 
-                        {/* Filters Button */}
+                        {/* Filters Button - Smaller, more subtle icon */}
                         <button
                             onClick={() => setShowFilters(!showFilters)}
                             className={`auth-button flex items-center gap-2 ${showFilters ? 'bg-accent/90' : ''}`}
                         >
-                            <Filter size={18} />
+                            <Filter size={14} />
                             Filters
                             {hasActiveFilters() && !searchTerm && (
                                 <span className="bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -418,7 +421,7 @@ function Dashboard() {
                         </button>
                     </div>
 
-                    {/* Active Filters Indicator */}
+                    {/* Active Filters Indicator - Only show search and source */}
                     {hasActiveFilters() && (
                         <div className="flex flex-wrap gap-2 mb-4">
                             {searchTerm && (
@@ -429,24 +432,9 @@ function Dashboard() {
                                     </button>
                                 </span>
                             )}
-                            {filters.title && (
+                            {filters.source && filters.source !== 'all' && (
                                 <span className="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 rounded-full text-sm">
-                                    Title: "{filters.title}"
-                                </span>
-                            )}
-                            {filters.company && (
-                                <span className="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 rounded-full text-sm">
-                                    Company: "{filters.company}"
-                                </span>
-                            )}
-                            {filters.location && (
-                                <span className="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 rounded-full text-sm">
-                                    Location: "{filters.location}"
-                                </span>
-                            )}
-                            {filters.source && (
-                                <span className="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 rounded-full text-sm">
-                                    Source: {filters.source}
+                                    Source: {filters.source.charAt(0).toUpperCase() + filters.source.slice(1)}
                                 </span>
                             )}
                         </div>
