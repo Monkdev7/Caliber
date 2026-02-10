@@ -7,7 +7,6 @@ const __dirname = dirname(__filename);
 
 /**
  * Helper: Run a Python script via `uv run`
- * Guaranteed to work with your uv environment.
  */
 function runPython(scriptPath, args = []) {
   return new Promise((resolve, reject) => {
@@ -31,8 +30,8 @@ function runPython(scriptPath, args = []) {
           new Error(
             `Python script failed with exit code ${code}\n${
               stderr || 'No stderr'
-            }`
-          )
+            }`,
+          ),
         );
       }
 
@@ -42,8 +41,8 @@ function runPython(scriptPath, args = []) {
       } catch (err) {
         reject(
           new Error(
-            `Failed to parse Python JSON output:\n${err.message}\nOUTPUT:\n${stdout}`
-          )
+            `Failed to parse Python JSON output:\n${err.message}\nOUTPUT:\n${stdout}`,
+          ),
         );
       }
     });

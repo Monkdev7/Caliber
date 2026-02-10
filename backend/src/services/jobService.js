@@ -59,7 +59,7 @@ class JobService {
       jobUrl: jobData.job_link,
       location: jobData.job_location || 'Remote/Not Specified',
       salary: jobData.salary || 'Not Disclosed',
-      source: source, // 'linkedin' or 'naukri'
+      source: source,
     };
   }
 
