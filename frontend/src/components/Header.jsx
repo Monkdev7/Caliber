@@ -4,7 +4,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { mockLogout, getCurrentUser } from '../lib/auth';
 import UserProfileBadge from './UserProfileBadge';
 
-export default function Header({ onScrape, scrapingLinkedIn = false, scrapingNaukri = false }) {
+export default function Header({
+  onScrape,
+  scrapingLinkedIn = false,
+  scrapingNaukri = false,
+}) {
   const [showMenu, setShowMenu] = useState(false);
   const navigate = useNavigate();
   const isAnyScraping = scrapingLinkedIn || scrapingNaukri;
@@ -22,7 +26,7 @@ export default function Header({ onScrape, scrapingLinkedIn = false, scrapingNau
   const handleLogout = () => {
     // TEMPORARY: Mock logout - clear localStorage and redirect
     mockLogout();
-    navigate('/login', { replace: true });
+    navigate('/', { replace: true });
     setShowMenu(false);
   };
 
@@ -30,7 +34,10 @@ export default function Header({ onScrape, scrapingLinkedIn = false, scrapingNau
     <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <Link
+          to="/"
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+        >
           <div className="bg-accent p-2 rounded-lg">
             <Briefcase className="text-white" size={24} />
           </div>
@@ -45,7 +52,13 @@ export default function Header({ onScrape, scrapingLinkedIn = false, scrapingNau
             onClick={() => handleScrape('linkedin')}
             disabled={isAnyScraping}
             className="auth-button flex items-center justify-center gap-2 px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-            title={scrapingLinkedIn ? 'Scraping LinkedIn...' : isAnyScraping ? 'Another scrape in progress' : 'Scrape LinkedIn jobs'}
+            title={
+              scrapingLinkedIn
+                ? 'Scraping LinkedIn...'
+                : isAnyScraping
+                  ? 'Another scrape in progress'
+                  : 'Scrape LinkedIn jobs'
+            }
           >
             <Zap size={18} className={scrapingLinkedIn ? 'animate-spin' : ''} />
             <span>{scrapingLinkedIn ? 'Scraping...' : 'Scrape LinkedIn'}</span>
@@ -54,7 +67,13 @@ export default function Header({ onScrape, scrapingLinkedIn = false, scrapingNau
             onClick={() => handleScrape('naukri')}
             disabled={isAnyScraping}
             className="auth-button flex items-center justify-center gap-2 px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-            title={scrapingNaukri ? 'Scraping Naukri...' : isAnyScraping ? 'Another scrape in progress' : 'Scrape Naukri jobs'}
+            title={
+              scrapingNaukri
+                ? 'Scraping Naukri...'
+                : isAnyScraping
+                  ? 'Another scrape in progress'
+                  : 'Scrape Naukri jobs'
+            }
           >
             <Zap size={18} className={scrapingNaukri ? 'animate-spin' : ''} />
             <span>{scrapingNaukri ? 'Scraping...' : 'Scrape Naukri'}</span>
@@ -104,8 +123,13 @@ export default function Header({ onScrape, scrapingLinkedIn = false, scrapingNau
               className="w-full auth-button flex items-center justify-center gap-2 px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
               type="button"
             >
-              <Zap size={18} className={scrapingLinkedIn ? 'animate-spin' : ''} />
-              <span>{scrapingLinkedIn ? 'Scraping...' : 'Scrape LinkedIn'}</span>
+              <Zap
+                size={18}
+                className={scrapingLinkedIn ? 'animate-spin' : ''}
+              />
+              <span>
+                {scrapingLinkedIn ? 'Scraping...' : 'Scrape LinkedIn'}
+              </span>
             </button>
             <button
               onClick={() => handleScrape('naukri')}
