@@ -8,7 +8,7 @@ export default function Header({ onScrape, scrapingLinkedIn = false, scrapingNau
   const [showMenu, setShowMenu] = useState(false);
   const navigate = useNavigate();
   const isAnyScraping = scrapingLinkedIn || scrapingNaukri;
-  
+
   // TEMPORARY: Get mock user data to check if authenticated
   // TODO: Replace with proper auth state management when backend is ready
   const user = getCurrentUser();
@@ -59,7 +59,7 @@ export default function Header({ onScrape, scrapingLinkedIn = false, scrapingNau
             <Zap size={18} className={scrapingNaukri ? 'animate-spin' : ''} />
             <span>{scrapingNaukri ? 'Scraping...' : 'Scrape Naukri'}</span>
           </button>
-          
+
           {/* User Profile Badge - Only show when authenticated */}
           {isAuthenticated && <UserProfileBadge />}
         </nav>
@@ -97,7 +97,7 @@ export default function Header({ onScrape, scrapingLinkedIn = false, scrapingNau
                 </div>
               </div>
             )}
-            
+
             <button
               onClick={() => handleScrape('linkedin')}
               disabled={isAnyScraping}
