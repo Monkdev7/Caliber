@@ -1,4 +1,4 @@
-import { MapPin, Briefcase, Clock, DollarSign, ExternalLink, Building2 } from 'lucide-react';
+import { MapPin, Briefcase, Clock, DollarSign, ExternalLink, Building2, Users, RefreshCw } from 'lucide-react';
 
 export default function JobCard({ job }) {
     const formatDate = (dateString) => {
@@ -11,7 +11,14 @@ export default function JobCard({ job }) {
         if (diffDays === 0) return 'Today';
         if (diffDays === 1) return 'Yesterday';
         if (diffDays < 7) return `${diffDays}d ago`;
+        if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
         return date.toLocaleDateString();
+    };
+
+    const formatApplicants = (num) => {
+        if (!num || num === 0) return 'N/A';
+        if (num >= 1000) return `${(num / 1000).toFixed(1)}k`;
+        return num.toString();
     };
 
     const getSourceColor = (source) => {
@@ -23,11 +30,8 @@ export default function JobCard({ job }) {
         return colors[source?.toLowerCase()] || colors.default;
     };
 
-    // Get job URL - check multiple possible field names
-    const jobUrl = job.url || job.job_url || job.link || null;
-
-    // Get salary with fallback
-    const salary = job.salary || 'Not disclosed';
+    // Get job URL from backend field
+    const jobUrl = job.jobUrl || null;
 
     return (
         <div className="bg-slate-900 border border-slate-800 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 p-4 animate-slide-up">
@@ -63,23 +67,41 @@ export default function JobCard({ job }) {
                                 <div className="flex items-center gap-2 text-slate-400">
                                     <DollarSign size={16} className="text-accent flex-shrink-0" />
                                     <span className="line-clamp-1">
-                                        {salary}
+                                        {job.salary || 'Not disclosed'}
                                     </span>
                                 </div>
 
-                                {/* Experience if available */}
-                                {job.experience && (
+                                {/* Number of Applicants - Show for LinkedIn jobs */}
+                                {job.numApplicants !== undefined && job.numApplicants !== null && (
                                     <div className="flex items-center gap-2 text-slate-400">
-                                        <Briefcase size={16} className="text-accent flex-shrink-0" />
-                                        <span className="line-clamp-1">{job.experience}</span>
+                                        <Users size={16} className="text-accent flex-shrink-0" />
+                                        <span className="line-clamp-1">
+                                            {formatApplicants(job.numApplicants)} applicants
+                                        </span>
                                     </div>
                                 )}
 
-                                {/* Posted Date if available */}
-                                {(job.posted_date || job.scraped_at) && (
+                                {/* Time Posted - Backend field */}
+                                {job.timePosted && (
                                     <div className="flex items-center gap-2 text-slate-400">
                                         <Clock size={16} className="text-accent flex-shrink-0" />
-                                        <span>{formatDate(job.posted_date || job.scraped_at)}</span>
+                                        <span className="line-clamp-1">{job.timePosted}</span>
+                                    </div>
+                                )}
+
+                                {/* Experience if available */}
+                                {job.experienceRequired && (
+                                    <div className="flex items-center gap-2 text-slate-400">
+                                        <Briefcase size={16} className="text-accent flex-shrink-0" />
+                                        <span className="line-clamp-1">{job.experienceRequired}</span>
+                                    </div>
+                                )}
+
+                                {/* Last Updated */}
+                                {job.updatedAt && (
+                                    <div className="flex items-center gap-2 text-slate-400">
+                                        <RefreshCw size={16} className="text-accent flex-shrink-0" />
+                                        <span className="line-clamp-1">Updated {formatDate(job.updatedAt)}</span>
                                     </div>
                                 )}
                             </div>
@@ -89,24 +111,6 @@ export default function JobCard({ job }) {
                                 <p className="text-slate-400 text-sm mt-3 line-clamp-2">
                                     {job.description}
                                 </p>
-                            )}
-
-                            {/* Job URL Display */}
-                            {jobUrl && (
-                                <div className="mt-3 pt-3 border-t border-slate-800">
-                                    <div className="flex items-start gap-2 text-xs">
-                                        <ExternalLink size={14} className="text-slate-500 flex-shrink-0 mt-0.5" />
-                                        <a
-                                            href={jobUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-accent hover:text-accent/80 hover:underline break-all line-clamp-2"
-                                            title={jobUrl}
-                                        >
-                                            {jobUrl}
-                                        </a>
-                                    </div>
-                                </div>
                             )}
                         </div>
                     </div>
@@ -127,18 +131,18 @@ export default function JobCard({ job }) {
                             href={jobUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="auth-button flex items-center justify-center gap-2 text-sm w-full lg:w-auto px-6 py-2.5"
+                            className="auth-button flex items-center justify-center gap-2 text-sm w-full lg:w-auto px-6 py-3"
                         >
-                            View Job
+                            Apply Now
                             <ExternalLink size={16} />
                         </a>
                     ) : (
                         <button
                             disabled
-                            className="px-4 py-2 bg-slate-800 border border-slate-700 text-slate-500 rounded-lg text-sm opacity-50 cursor-not-allowed w-full lg:w-auto px-6 py-2.5"
+                            className="px-6 py-3 bg-slate-800 border border-slate-700 text-slate-500 rounded-lg text-sm opacity-50 cursor-not-allowed w-full lg:w-auto"
                             title="Job URL not available"
                         >
-                            No Link Available
+                            Link N/A
                         </button>
                     )}
                 </div>
