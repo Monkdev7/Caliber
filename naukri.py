@@ -44,8 +44,11 @@ def get_job_links(driver, url):
     job_links = []
     for a in soup.select("a.title"):
         href = a.get("href")
-        if href and href.startswith("http"):
-            job_links.append(href)
+        if href:
+            # Convert href to string if it's a list or other type
+            href_str = str(href) if not isinstance(href, str) else href
+            if href_str.startswith("http"):
+                job_links.append(href_str)
 
     return list(set(job_links))
 
