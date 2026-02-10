@@ -12,14 +12,14 @@ export default function Header({ onScrape, scrapingLinkedIn = false, scrapingNau
   };
 
   return (
-    <header className="bg-white shadow-md sticky top-0 z-50">
+    <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
+          <div className="bg-accent p-2 rounded-lg">
             <Briefcase className="text-white" size={24} />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800 hidden sm:block">
+          <h1 className="text-2xl font-bold text-slate-100 hidden sm:block">
             Caliber
           </h1>
         </Link>
@@ -29,7 +29,7 @@ export default function Header({ onScrape, scrapingLinkedIn = false, scrapingNau
           <button
             onClick={() => handleScrape('linkedin')}
             disabled={isAnyScraping}
-            className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="auth-button flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             title={scrapingLinkedIn ? 'Scraping LinkedIn...' : isAnyScraping ? 'Another scrape in progress' : 'Scrape LinkedIn jobs'}
           >
             <Zap size={18} className={scrapingLinkedIn ? 'animate-spin' : ''} />
@@ -38,7 +38,7 @@ export default function Header({ onScrape, scrapingLinkedIn = false, scrapingNau
           <button
             onClick={() => handleScrape('naukri')}
             disabled={isAnyScraping}
-            className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="auth-button flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             title={scrapingNaukri ? 'Scraping Naukri...' : isAnyScraping ? 'Another scrape in progress' : 'Scrape Naukri jobs'}
           >
             <Zap size={18} className={scrapingNaukri ? 'animate-spin' : ''} />
@@ -48,7 +48,7 @@ export default function Header({ onScrape, scrapingLinkedIn = false, scrapingNau
 
         {/* Mobile Menu Button */}
         <button
-          className="sm:hidden p-2"
+          className="sm:hidden p-2 text-slate-400 hover:text-slate-100"
           onClick={() => setShowMenu(!showMenu)}
           type="button"
           aria-label="Toggle menu"
@@ -59,12 +59,12 @@ export default function Header({ onScrape, scrapingLinkedIn = false, scrapingNau
 
       {/* Mobile Menu */}
       {showMenu && (
-        <div className="sm:hidden border-t border-gray-200 bg-gray-50">
+        <div className="sm:hidden border-t border-slate-800 bg-slate-950">
           <div className="px-4 py-4 space-y-3">
             <button
               onClick={() => handleScrape('linkedin')}
               disabled={isAnyScraping}
-              className="w-full btn-primary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full auth-button flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               type="button"
             >
               <Zap size={18} className={scrapingLinkedIn ? 'animate-spin' : ''} />
@@ -73,7 +73,7 @@ export default function Header({ onScrape, scrapingLinkedIn = false, scrapingNau
             <button
               onClick={() => handleScrape('naukri')}
               disabled={isAnyScraping}
-              className="w-full btn-primary flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full auth-button flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               type="button"
             >
               <Zap size={18} className={scrapingNaukri ? 'animate-spin' : ''} />
@@ -81,7 +81,7 @@ export default function Header({ onScrape, scrapingLinkedIn = false, scrapingNau
             </button>
             <Link
               to="/"
-              className="w-full btn-secondary flex items-center justify-center gap-2"
+              className="w-full px-4 py-2 bg-slate-900 border border-slate-800 text-slate-300 rounded-lg hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
               onClick={() => setShowMenu(false)}
             >
               Back to Home

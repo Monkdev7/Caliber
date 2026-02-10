@@ -299,7 +299,7 @@ function Dashboard() {
     const isAnyScraping = scrapingLinkedIn || scrapingNaukri;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="min-h-screen bg-slate-950">
             <Header
                 onScrape={triggerScrape}
                 scrapingLinkedIn={scrapingLinkedIn}
@@ -310,12 +310,12 @@ function Dashboard() {
             <main className="max-w-7xl mx-auto px-4 py-8">
                 {/* Success Alert */}
                 {success && (
-                    <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg animate-fade-in flex items-center gap-3">
-                        <CheckCircle size={20} className="flex-shrink-0" />
+                    <div className="mb-6 p-4 bg-slate-900 border border-slate-800 text-slate-100 rounded-lg animate-fade-in flex items-center gap-3">
+                        <CheckCircle size={20} className="flex-shrink-0 text-accent" />
                         <span>{success}</span>
                         <button
                             onClick={() => setSuccess(null)}
-                            className="ml-auto text-green-600 hover:text-green-800"
+                            className="ml-auto text-slate-400 hover:text-slate-100"
                         >
                             <X size={18} />
                         </button>
@@ -324,11 +324,11 @@ function Dashboard() {
 
                 {/* Error Alert */}
                 {error && (
-                    <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg animate-fade-in flex items-center gap-3">
+                    <div className="mb-6 p-4 bg-slate-900 border border-slate-800 text-rose-500 rounded-lg animate-fade-in flex items-center gap-3">
                         <span className="flex-1">{error}</span>
                         <button
                             onClick={() => setError(null)}
-                            className="text-red-600 hover:text-red-800"
+                            className="text-slate-400 hover:text-slate-100"
                         >
                             <X size={18} />
                         </button>
@@ -341,20 +341,20 @@ function Dashboard() {
                         {/* Search Bar */}
                         <div className="flex-1 relative">
                             <Search
-                                className="absolute left-3 top-3 text-gray-400"
+                                className="absolute left-3 top-3 text-slate-400"
                                 size={20}
                             />
                             <input
                                 type="text"
                                 placeholder="Search by job title, company, or location..."
-                                className="input-field pl-10 pr-10"
+                                className="auth-input pl-10 pr-10"
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
                             />
                             {searchTerm && (
                                 <button
                                     onClick={() => setSearchTerm('')}
-                                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-100"
                                 >
                                     <X size={20} />
                                 </button>
@@ -369,7 +369,7 @@ function Dashboard() {
                                 setSortBy(field);
                                 setSortOrder(order);
                             }}
-                            className="input-field"
+                            className="auth-input"
                         >
                             <option value="date-desc">Newest First</option>
                             <option value="date-asc">Oldest First</option>
@@ -384,12 +384,12 @@ function Dashboard() {
                         {/* Filters Button */}
                         <button
                             onClick={() => setShowFilters(!showFilters)}
-                            className={`btn-primary flex items-center gap-2 ${showFilters ? 'bg-blue-700' : ''}`}
+                            className={`auth-button flex items-center gap-2 ${showFilters ? 'bg-accent/90' : ''}`}
                         >
                             <Filter size={18} />
                             Filters
                             {hasActiveFilters() && !searchTerm && (
-                                <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                <span className="bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                                     !
                                 </span>
                             )}
@@ -399,7 +399,7 @@ function Dashboard() {
                         {hasActiveFilters() && (
                             <button
                                 onClick={clearAllFilters}
-                                className="btn-secondary flex items-center gap-2"
+                                className="px-4 py-2 bg-slate-900 border border-slate-800 text-slate-300 rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2"
                                 title="Clear all filters"
                             >
                                 <X size={18} />
@@ -411,7 +411,7 @@ function Dashboard() {
                         <button
                             onClick={exportToCSV}
                             disabled={filteredJobs.length === 0}
-                            className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="auth-button flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <Download size={18} />
                             Export
@@ -422,7 +422,7 @@ function Dashboard() {
                     {hasActiveFilters() && (
                         <div className="flex flex-wrap gap-2 mb-4">
                             {searchTerm && (
-                                <span className="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
+                                <span className="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 rounded-full text-sm">
                                     Search: "{searchTerm}"
                                     <button onClick={() => setSearchTerm('')}>
                                         <X size={14} />
@@ -430,22 +430,22 @@ function Dashboard() {
                                 </span>
                             )}
                             {filters.title && (
-                                <span className="inline-flex items-center gap-2 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
+                                <span className="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 rounded-full text-sm">
                                     Title: "{filters.title}"
                                 </span>
                             )}
                             {filters.company && (
-                                <span className="inline-flex items-center gap-2 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
+                                <span className="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 rounded-full text-sm">
                                     Company: "{filters.company}"
                                 </span>
                             )}
                             {filters.location && (
-                                <span className="inline-flex items-center gap-2 px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm">
+                                <span className="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 rounded-full text-sm">
                                     Location: "{filters.location}"
                                 </span>
                             )}
                             {filters.source && (
-                                <span className="inline-flex items-center gap-2 px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-sm">
+                                <span className="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 rounded-full text-sm">
                                     Source: {filters.source}
                                 </span>
                             )}
@@ -463,40 +463,40 @@ function Dashboard() {
 
                 {/* Stats */}
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
-                    <div className="card text-center">
-                        <div className="text-3xl font-bold text-blue-600">
+                    <div className="bg-slate-900 border border-slate-800 rounded-lg shadow-md p-4 text-center">
+                        <div className="text-3xl font-bold text-accent">
                             {filteredJobs.length}
                         </div>
-                        <div className="text-gray-600 mt-1 text-sm">
+                        <div className="text-slate-400 mt-1 text-sm">
                             {hasActiveFilters() ? 'Filtered Jobs' : 'Total Jobs'}
                         </div>
                     </div>
-                    <div className="card text-center">
-                        <div className="text-3xl font-bold text-purple-600">
+                    <div className="bg-slate-900 border border-slate-800 rounded-lg shadow-md p-4 text-center">
+                        <div className="text-3xl font-bold text-accent">
                             {jobs.length}
                         </div>
-                        <div className="text-gray-600 mt-1 text-sm">All Jobs</div>
+                        <div className="text-slate-400 mt-1 text-sm">All Jobs</div>
                     </div>
-                    <div className="card text-center">
-                        <div className="text-3xl font-bold text-green-600">
+                    <div className="bg-slate-900 border border-slate-800 rounded-lg shadow-md p-4 text-center">
+                        <div className="text-3xl font-bold text-accent">
                             {new Set(jobs.map(j => j.company).filter(Boolean)).size}
                         </div>
-                        <div className="text-gray-600 mt-1 text-sm">Companies</div>
+                        <div className="text-slate-400 mt-1 text-sm">Companies</div>
                     </div>
-                    <div className="card text-center">
-                        <div className="text-3xl font-bold text-orange-600">
+                    <div className="bg-slate-900 border border-slate-800 rounded-lg shadow-md p-4 text-center">
+                        <div className="text-3xl font-bold text-accent">
                             {new Set(jobs.map(j => j.source).filter(Boolean)).size}
                         </div>
-                        <div className="text-gray-600 mt-1 text-sm">Sources</div>
+                        <div className="text-slate-400 mt-1 text-sm">Sources</div>
                     </div>
                 </div>
 
                 {/* Scraping State */}
                 {isAnyScraping && (
-                    <div className="mb-6 p-6 bg-blue-50 border border-blue-200 rounded-lg animate-fade-in">
+                    <div className="mb-6 p-6 bg-slate-900 border border-slate-800 rounded-lg animate-fade-in">
                         <div className="flex items-center justify-center gap-3">
-                            <Zap className="animate-spin text-blue-600" size={24} />
-                            <span className="text-blue-700 font-medium">
+                            <Zap className="animate-spin text-accent" size={24} />
+                            <span className="text-slate-300 font-medium">
                                 {scrapingLinkedIn && 'Scraping LinkedIn jobs...'}
                                 {scrapingNaukri && 'Scraping Naukri jobs...'}
                                 {' This may take a moment.'}
@@ -508,25 +508,25 @@ function Dashboard() {
                 {/* Loading State */}
                 {loading && !isAnyScraping && (
                     <div className="text-center py-16">
-                        <Zap className="animate-spin mx-auto text-blue-600 mb-4" size={48} />
-                        <p className="text-gray-600 text-lg font-medium">Loading jobs...</p>
-                        <p className="text-gray-500 text-sm mt-2">Please wait while we fetch the latest listings</p>
+                        <Zap className="animate-spin mx-auto text-accent mb-4" size={48} />
+                        <p className="text-slate-100 text-lg font-medium">Loading jobs...</p>
+                        <p className="text-slate-400 text-sm mt-2">Please wait while we fetch the latest listings</p>
                     </div>
                 )}
 
                 {/* Empty State - No Jobs at All */}
                 {!loading && !isAnyScraping && jobs.length === 0 && (
-                    <div className="text-center py-16 bg-white rounded-lg shadow-sm">
-                        <Briefcase className="mx-auto text-gray-300 mb-4" size={64} />
-                        <h3 className="text-xl font-semibold text-gray-700 mb-2">No Jobs Found</h3>
-                        <p className="text-gray-500 mb-6">
+                    <div className="text-center py-16 bg-slate-900 border border-slate-800 rounded-lg shadow-md">
+                        <Briefcase className="mx-auto text-slate-700 mb-4" size={64} />
+                        <h3 className="text-xl font-semibold text-slate-100 mb-2">No Jobs Found</h3>
+                        <p className="text-slate-400 mb-6">
                             Get started by scraping jobs from LinkedIn or Naukri
                         </p>
                         <div className="flex justify-center gap-4">
                             <button
                                 onClick={() => triggerScrape('linkedin')}
                                 disabled={isAnyScraping}
-                                className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="auth-button flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <Zap size={18} className={scrapingLinkedIn ? 'animate-spin' : ''} />
                                 {scrapingLinkedIn ? 'Scraping...' : 'Scrape LinkedIn'}
@@ -534,7 +534,7 @@ function Dashboard() {
                             <button
                                 onClick={() => triggerScrape('naukri')}
                                 disabled={isAnyScraping}
-                                className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="auth-button flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <Zap size={18} className={scrapingNaukri ? 'animate-spin' : ''} />
                                 {scrapingNaukri ? 'Scraping...' : 'Scrape Naukri'}
@@ -545,15 +545,15 @@ function Dashboard() {
 
                 {/* Empty State - No Filtered Results */}
                 {!loading && !isAnyScraping && jobs.length > 0 && filteredJobs.length === 0 && (
-                    <div className="text-center py-16 bg-white rounded-lg shadow-sm">
-                        <Search className="mx-auto text-gray-300 mb-4" size={64} />
-                        <h3 className="text-xl font-semibold text-gray-700 mb-2">No Matching Jobs</h3>
-                        <p className="text-gray-500 mb-4">
+                    <div className="text-center py-16 bg-slate-900 border border-slate-800 rounded-lg shadow-md">
+                        <Search className="mx-auto text-slate-700 mb-4" size={64} />
+                        <h3 className="text-xl font-semibold text-slate-100 mb-2">No Matching Jobs</h3>
+                        <p className="text-slate-400 mb-4">
                             We couldn't find any jobs matching your search criteria
                         </p>
                         <button
                             onClick={clearAllFilters}
-                            className="btn-primary flex items-center gap-2 mx-auto"
+                            className="auth-button flex items-center gap-2 mx-auto"
                         >
                             <X size={18} />
                             Clear All Filters
@@ -564,7 +564,7 @@ function Dashboard() {
                 {/* Jobs Grid */}
                 {!loading && !isAnyScraping && filteredJobs.length > 0 && (
                     <>
-                        <div className="mb-4 text-sm text-gray-600">
+                        <div className="mb-4 text-sm text-slate-400">
                             Showing {filteredJobs.length} of {jobs.length} jobs
                             {sortBy !== 'date' && (
                                 <span className="ml-2">
@@ -582,8 +582,8 @@ function Dashboard() {
             </main>
 
             {/* Footer */}
-            <footer className="bg-white border-t border-gray-200 py-6 mt-12">
-                <div className="max-w-7xl mx-auto px-4 text-center text-gray-600">
+            <footer className="bg-slate-900 border-t border-slate-800 py-6 mt-12">
+                <div className="max-w-7xl mx-auto px-4 text-center text-slate-400">
                     <p>&copy; 2026 Caliber Job Scraper. All rights reserved.</p>
                 </div>
             </footer>
