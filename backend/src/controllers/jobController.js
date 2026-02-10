@@ -6,6 +6,7 @@ class JobController {
    */
   async getJobs(req, res, next) {
     try {
+      // Parsing filters and options from query parameters
       const filters = {
         source: req.query.source,
         company: req.query.company,
@@ -14,16 +15,21 @@ class JobController {
 
       const options = {
         page: parseInt(req.query.page) || 1,
-        limit: parseInt(req.query.limit) || 20,
+        limit: parseInt(req.query.limit) || 60,
         sortBy: req.query.sortBy || 'scrapedAt',
         sortOrder: req.query.sortOrder || 'desc',
       };
 
+      // Fetch jobs with filters and pagination
       const result = await jobService.getJobs(filters, options);
 
+      // Send success response with jobs and pagination info
       res.status(200).json({
         success: true,
-        data: result,
+        data: {
+          jobs: result.jobs, // Array of jobs
+          pagination: result.pagination, // Pagination info
+        },
       });
     } catch (error) {
       next(error);

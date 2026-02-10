@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Briefcase, MapPin, DollarSign, Calendar, Zap, Filter, Download } from 'lucide-react';
+import { Search, Briefcase, Zap, Filter, Download } from 'lucide-react';
 import axios from 'axios';
 import Header from './components/Header';
 import JobCard from './components/JobCard';
@@ -17,10 +17,16 @@ function App() {
     title: '',
     company: '',
     location: '',
-    source: 'all'
+    source: '',
+  });
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 60,
+    total: 0,
+    pages: 0,
   });
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  // const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
   // Fetch jobs on mount
   useEffect(() => {
@@ -35,9 +41,28 @@ function App() {
   const fetchJobs = async () => {
     setLoading(true);
     setError(null);
+
     try {
-      const response = await axios.get(`${API_URL}/jobs`);
-      setJobs(response.data || []);
+      const response = await axios.get('/api/jobs', {
+        params: {
+          page: 1, // Example page number
+          limit: 60, // Example limit
+          search: searchTerm,
+          source: filters.source,
+          company: filters.company,
+          sortBy: 'scrapedAt',
+          sortOrder: 'desc',
+        },
+      });
+
+      const { jobs, pagination } = response.data.data;
+
+      if (response.data.success && Array.isArray(response.data.data.jobs)) {
+        setJobs(jobs);
+        setPagination(pagination);
+      } else {
+        setError('Invalid data structure received.');
+      }
     } catch (err) {
       setError('Failed to fetch jobs. Please try again later.');
       console.error('Error fetching jobs:', err);
@@ -46,16 +71,37 @@ function App() {
     }
   };
 
-  const triggerScrape = async (source) => {
+  const triggerScrape = async source => {
     try {
       setLoading(true);
-      const response = await axios.post(`${API_URL}/scrape`, { source });
+      setError(null);
+
+      // default fallback values
+      const keyword = searchTerm || 'Software Engineer';
+      const location = filters.location || 'Remote';
+
+      let response;
+
+      if (source === 'linkedin') {
+        response = await axios.post(`/api/scrape/linkedin`, {
+          keyword,
+          location,
+        });
+      } else if (source === 'naukri') {
+        response = await axios.post(`/api/scrape/naukri`, {
+          keyword,
+          location,
+        });
+      }
+
       if (response.data.success) {
         fetchJobs();
+      } else {
+        setError('Scraping failed — server did not return success.');
       }
     } catch (err) {
       setError(`Failed to scrape ${source} jobs.`);
-      console.error('Error scraping:', err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -66,9 +112,10 @@ function App() {
 
     // Search filter
     if (searchTerm) {
-      filtered = filtered.filter(job =>
-        job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.company?.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        job =>
+          job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          job.company?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -101,7 +148,7 @@ function App() {
     setFilteredJobs(filtered);
   };
 
-  const handleFilterChange = (newFilters) => {
+  const handleFilterChange = newFilters => {
     setFilters(newFilters);
   };
 
@@ -121,9 +168,9 @@ function App() {
           `"${job.location || ''}"`,
           `"${job.salary || ''}"`,
           `"${job.source || ''}"`,
-          `"${job.url || ''}"`
+          `"${job.url || ''}"`,
         ].join(',')
-      )
+      ),
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -151,13 +198,16 @@ function App() {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-3 text-gray-400" size={20} />
+              <Search
+                className="absolute left-3 top-3 text-gray-400"
+                size={20}
+              />
               <input
                 type="text"
                 placeholder="Search jobs by title or company..."
                 className="input-field pl-10"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={e => setSearchTerm(e.target.value)}
               />
             </div>
             <button
@@ -188,15 +238,21 @@ function App() {
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           <div className="card text-center">
-            <div className="text-3xl font-bold text-blue-600">{filteredJobs.length}</div>
+            <div className="text-3xl font-bold text-blue-600">
+              {filteredJobs.length}
+            </div>
             <div className="text-gray-600 mt-1">Jobs Found</div>
           </div>
           <div className="card text-center">
-            <div className="text-3xl font-bold text-purple-600">{new Set(jobs.map(j => j.source)).size}</div>
+            <div className="text-3xl font-bold text-purple-600">
+              {new Set(jobs.map(j => j.source)).size}
+            </div>
             <div className="text-gray-600 mt-1">Sources</div>
           </div>
           <div className="card text-center">
-            <div className="text-3xl font-bold text-green-600">{new Set(jobs.map(j => j.company)).size}</div>
+            <div className="text-3xl font-bold text-green-600">
+              {new Set(jobs.map(j => j.company)).size}
+            </div>
             <div className="text-gray-600 mt-1">Companies</div>
           </div>
         </div>
@@ -214,14 +270,16 @@ function App() {
           <div className="text-center py-12">
             <Briefcase className="mx-auto text-gray-400 mb-4" size={48} />
             <p className="text-gray-500 text-lg">
-              {jobs.length === 0 ? 'No jobs scraped yet. Click "Scrape" to get started!' : 'No jobs match your filters.'}
+              {jobs.length === 0
+                ? 'No jobs scraped yet. Click "Scrape" to get started!'
+                : 'No jobs match your filters.'}
             </p>
           </div>
         )}
 
         {!loading && filteredJobs.length > 0 && (
           <div className="grid grid-cols-1 gap-4 animate-slide-up">
-            {filteredJobs.map((job) => (
+            {filteredJobs.map(job => (
               <JobCard key={job._id || job.id} job={job} />
             ))}
           </div>

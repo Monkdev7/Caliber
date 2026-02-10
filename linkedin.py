@@ -78,6 +78,7 @@ def scrape_linkedin_jobs(keyword: str, location: str, max_pages: int = 1):
                 "job_title": None,
                 "num_applicants": None,
                 "job_id": job_id,
+                "job_link": job_url,
             }
 
             title_element = job_soup.select_one("h2.topcard__title")

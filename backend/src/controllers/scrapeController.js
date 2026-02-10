@@ -3,159 +3,106 @@ import jobService from '../services/jobService.js';
 
 class ScrapeController {
   /**
-   * Scrape jobs from LinkedIn
+   * Helper to handle the common save logic
    */
+  async _handleScrapeAndSave(source, keyword, location, maxPages = 1) {
+    // 1. Execute the specific python script
+    const jobs =
+      source === 'linkedin'
+        ? await pythonExecutor.scrapeLinkedIn(keyword, location, maxPages)
+        : await pythonExecutor.scrapeNaukri(keyword, location);
+
+    // 2. Save and return results
+    return await jobService.saveJobs(jobs, source);
+  }
+
   async scrapeLinkedIn(req, res, next) {
     try {
       const { keyword, location, maxPages = 1 } = req.body;
-
-      // Validation
-      if (!keyword || !location) {
-        return res.status(400).json({
-          success: false,
-          error: 'Keyword and location are required',
-        });
-      }
-
-      if (maxPages < 1 || maxPages > 10) {
-        return res.status(400).json({
-          success: false,
-          error: 'maxPages must be between 1 and 10',
-        });
-      }
+      if (!keyword || !location)
+        throw new Error('Keyword and location are required');
 
       console.log(`🔍 Starting LinkedIn scrape: ${keyword} in ${location}`);
-
-      // Execute Python scraper
-      const jobs = await pythonExecutor.scrapeLinkedIn(
+      const saveResults = await this._handleScrapeAndSave(
+        'linkedin',
         keyword,
         location,
-        maxPages
+        maxPages,
       );
 
-      // Save to database
-      const saveResults = await jobService.saveJobs(jobs, 'linkedin');
-
-      console.log(
-        `✅ LinkedIn scrape completed: ${saveResults.inserted} new, ${saveResults.updated} updated`
-      );
-
-      res.status(200).json({
-        success: true,
-        message: 'LinkedIn scraping completed',
-        data: {
-          keyword,
-          location,
-          maxPages,
-          results: saveResults,
-        },
-      });
+      res
+        .status(200)
+        .json({
+          success: true,
+          message: 'LinkedIn sync complete',
+          data: saveResults,
+        });
     } catch (error) {
-      console.error('❌ LinkedIn scrape error:', error.message);
       next(error);
     }
   }
 
-  /**
-   * Scrape jobs from Naukri
-   */
   async scrapeNaukri(req, res, next) {
     try {
       const { keyword, location } = req.body;
-
-      // Validation
-      if (!keyword || !location) {
-        return res.status(400).json({
-          success: false,
-          error: 'Keyword and location are required',
-        });
-      }
+      if (!keyword || !location)
+        throw new Error('Keyword and location are required');
 
       console.log(`🔍 Starting Naukri scrape: ${keyword} in ${location}`);
-
-      // Execute Python scraper
-      const jobs = await pythonExecutor.scrapeNaukri(keyword, location);
-
-      // Save to database
-      const saveResults = await jobService.saveJobs(jobs, 'naukri');
-
-      console.log(
-        `✅ Naukri scrape completed: ${saveResults.inserted} new, ${saveResults.updated} updated`
+      const saveResults = await this._handleScrapeAndSave(
+        'naukri',
+        keyword,
+        location,
       );
 
-      res.status(200).json({
-        success: true,
-        message: 'Naukri scraping completed',
-        data: {
-          keyword,
-          location,
-          results: saveResults,
-        },
-      });
+      res
+        .status(200)
+        .json({
+          success: true,
+          message: 'Naukri sync complete',
+          data: saveResults,
+        });
     } catch (error) {
-      console.error('❌ Naukri scrape error:', error.message);
       next(error);
     }
   }
 
   /**
-   * Scrape from all sources
+   * Scrape from all sources IN PARALLEL
    */
   async scrapeAll(req, res, next) {
     try {
       const { keyword, location, maxPages = 1 } = req.body;
-
       if (!keyword || !location) {
-        return res.status(400).json({
-          success: false,
-          error: 'Keyword and location are required',
-        });
+        return res
+          .status(400)
+          .json({ success: false, error: 'Missing parameters' });
       }
 
-      console.log(
-        `🔍 Starting scrape from all sources: ${keyword} in ${location}`
-      );
+      console.log(`🚀 Multi-source scrape started: ${keyword} @ ${location}`);
 
-      const results = {
-        linkedin: null,
-        naukri: null,
+      // Promise.allSettled runs them at the same time and doesn't crash if one fails
+      const results = await Promise.allSettled([
+        this._handleScrapeAndSave('linkedin', keyword, location, maxPages),
+        this._handleScrapeAndSave('naukri', keyword, location),
+      ]);
+
+      const responseData = {
+        linkedin:
+          results[0].status === 'fulfilled'
+            ? results[0].value
+            : { error: results[0].reason },
+        naukri:
+          results[1].status === 'fulfilled'
+            ? results[1].value
+            : { error: results[1].reason },
       };
-
-      // Scrape LinkedIn
-      try {
-        const linkedInJobs = await pythonExecutor.scrapeLinkedIn(
-          keyword,
-          location,
-          maxPages
-        );
-        results.linkedin = await jobService.saveJobs(linkedInJobs, 'linkedin');
-      } catch (error) {
-        console.error('LinkedIn scrape failed:', error.message);
-        results.linkedin = { error: error.message };
-      }
-
-      // Scrape Naukri
-      try {
-        const naukriJobs = await pythonExecutor.scrapeNaukri(keyword, location);
-        results.naukri = await jobService.saveJobs(naukriJobs, 'naukri');
-      } catch (error) {
-        console.error('Naukri scrape failed:', error.message);
-        results.naukri = { error: error.message };
-      }
-
-      console.log(`✅ Multi-source scrape completed`);
 
       res.status(200).json({
         success: true,
-        message: 'Multi-source scraping completed',
-        data: {
-          keyword,
-          location,
-          results,
-        },
+        data: responseData,
       });
     } catch (error) {
-      console.error('❌ Multi-source scrape error:', error.message);
       next(error);
     }
   }
