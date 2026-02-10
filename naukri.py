@@ -1,31 +1,54 @@
 import json
 import sys
 import re
+import os
 from selenium import webdriver
-from selenium.webdriver.firefox.service import Service
-from selenium.webdriver.firefox.options import Options
+from bs4 import BeautifulSoup
+
+# Selenium Imports
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from bs4 import BeautifulSoup
 
 
 def setup_driver():
-    """Sets up the Selenium WebDriver."""
-    firefox_options = Options()
-    firefox_options.add_argument("--headless")
-    firefox_options.add_argument("--disable-gpu")
-    firefox_options.add_argument("--no-sandbox")
+    """Universal setup: Detects my Linux paths, otherwise defaults to Chrome."""
 
+    # 1. Check for your specific Linux/Firefox paths
     geckodriver_path = "/home/makima/Desktop/geckodriver-v0.36.0-linux64/geckodriver"
     firefox_binary_path = (
         "/home/makima/Desktop/firefox-131.0a1.en-US.linux-x86_64/firefox/firefox"
     )
 
-    firefox_options.binary_location = firefox_binary_path
-    service = Service(geckodriver_path)
-    driver = webdriver.Firefox(service=service, options=firefox_options)
-    return driver
+    if os.path.exists(geckodriver_path) and os.path.exists(firefox_binary_path):
+        from selenium.webdriver.firefox.service import Service
+        from selenium.webdriver.firefox.options import Options
+
+        sys.stderr.write("Detected Makima's environment. Launching Firefox...\n")
+        firefox_options = Options()
+        firefox_options.add_argument("--headless")
+        firefox_options.add_argument("--disable-gpu")
+        firefox_options.add_argument("--no-sandbox")
+        firefox_options.binary_location = firefox_binary_path
+
+        service = Service(geckodriver_path)
+        return webdriver.Firefox(service=service, options=firefox_options)
+
+    # 2. Fallback for Windows/Other users (Chrome)
+    else:
+        from selenium.webdriver.chrome.service import Service as ChromeService
+        from selenium.webdriver.chrome.options import Options as ChromeOptions
+
+        sys.stderr.write("Environment mismatch. Launching default Chrome...\n")
+        chrome_options = ChromeOptions()
+        chrome_options.add_argument("--headless=new")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+
+        # This will work if 'chromedriver' is in the system PATH or
+        # if using a library like webdriver-manager
+        return webdriver.Chrome(options=chrome_options)
 
 
 def get_job_links(driver, url):
@@ -47,7 +70,7 @@ def get_job_links(driver, url):
 
 
 def scrape_job_details(job_url, driver):
-    """Job details from an individual jobs."""
+    """Job details from an individual job."""
     sys.stderr.write(f"Scraping job: {job_url}\n")
     driver.get(job_url)
 
@@ -58,19 +81,18 @@ def scrape_job_details(job_url, driver):
     page_html = driver.page_source
     soup = BeautifulSoup(page_html, "lxml")
 
-    # Extract ID from URL
+    # ID Extraction Logic
     job_id_match = re.search(r"(\d{10,})", job_url)
     job_id = (
         job_id_match.group(1) if job_id_match else job_url.split("-")[-1].split("?")[0]
     )
 
-    # Logic for Posted and Applicants using sibling lookup
     time_posted = "Recently"
     num_applicants = 0
 
+    # Exact Sibling Lookup Logic
     stats_container = soup.select_one("div.styles_jhc__jd-stats__KrId0")
     if stats_container:
-        # Find all stat spans that contain a label and a value span
         stat_items = stats_container.select("span.styles_jhc__stat__PgY67")
         for item in stat_items:
             label = item.select_one("label")
@@ -83,13 +105,13 @@ def scrape_job_details(job_url, driver):
                 if "posted:" in label_text:
                     time_posted = val_text
                 elif "applicants:" in label_text:
-                    # Extract digits (e.g., "100+" -> 100)
                     match = re.search(r"\d+", val_text)
                     num_applicants = int(match.group()) if match else 0
 
     job_title = soup.select_one("h1.styles_jd-header-title__rZwM1")
     company_name = soup.select_one("div.styles_jd-header-comp-name__MvqAI > a")
 
+    # Exact Dictionary Keys and Selectors
     job_data = {
         "job_id": job_id,
         "job_title": job_title.get_text(strip=True) if job_title else "No Title",
