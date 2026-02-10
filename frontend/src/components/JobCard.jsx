@@ -25,7 +25,7 @@ export default function JobCard({ job }) {
 
     // Get job URL - check multiple possible field names
     const jobUrl = job.url || job.job_url || job.link || null;
-    
+
     // Get salary with fallback
     const salary = job.salary || 'Not disclosed';
 
@@ -40,7 +40,7 @@ export default function JobCard({ job }) {
                             <h3 className="text-xl font-bold text-gray-800 hover:text-blue-600 transition-colors leading-tight">
                                 {job.title || job.job_title || 'Job Title Not Available'}
                             </h3>
-                            
+
                             {/* Company Name */}
                             <div className="flex items-center gap-2 mt-2">
                                 <Building2 size={16} className="text-gray-500" />

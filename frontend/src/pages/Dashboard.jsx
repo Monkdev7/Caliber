@@ -87,7 +87,7 @@ function Dashboard() {
             } else if (source === 'naukri') {
                 setScrapingNaukri(true);
             }
-            
+
             setError(null);
             setSuccess(null);
 
@@ -119,10 +119,10 @@ function Dashboard() {
                     source: '',
                 });
                 setShowFilters(false);
-                
+
                 // Refetch jobs to show new data
                 await fetchJobs();
-                
+
                 // Show success message
                 const jobCount = response.data.count || response.data.data?.length || 'New';
                 setSuccess(`Successfully scraped ${jobCount} jobs from ${source.charAt(0).toUpperCase() + source.slice(1)}!`);
@@ -153,10 +153,10 @@ function Dashboard() {
                     const title = (job.title || job.job_title || '').toLowerCase();
                     const company = (job.company || job.company_name || '').toLowerCase();
                     const location = (job.location || '').toLowerCase();
-                    
+
                     return title.includes(searchLower) ||
-                           company.includes(searchLower) ||
-                           location.includes(searchLower);
+                        company.includes(searchLower) ||
+                        location.includes(searchLower);
                 }
             );
         }
@@ -292,7 +292,7 @@ function Dashboard() {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
-        
+
         setSuccess(`Exported ${filteredJobs.length} jobs to CSV!`);
     };
 
@@ -300,8 +300,8 @@ function Dashboard() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-            <Header 
-                onScrape={triggerScrape} 
+            <Header
+                onScrape={triggerScrape}
                 scrapingLinkedIn={scrapingLinkedIn}
                 scrapingNaukri={scrapingNaukri}
             />
@@ -313,7 +313,7 @@ function Dashboard() {
                     <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg animate-fade-in flex items-center gap-3">
                         <CheckCircle size={20} className="flex-shrink-0" />
                         <span>{success}</span>
-                        <button 
+                        <button
                             onClick={() => setSuccess(null)}
                             className="ml-auto text-green-600 hover:text-green-800"
                         >
@@ -326,7 +326,7 @@ function Dashboard() {
                 {error && (
                     <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg animate-fade-in flex items-center gap-3">
                         <span className="flex-1">{error}</span>
-                        <button 
+                        <button
                             onClick={() => setError(null)}
                             className="text-red-600 hover:text-red-800"
                         >
