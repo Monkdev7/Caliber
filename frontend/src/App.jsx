@@ -6,6 +6,8 @@ import AuthLogin from './pages/AuthLogin';
 import AuthSignup from './pages/AuthSignup';
 import AuthForgotPassword from './pages/AuthForgotPassword';
 import AuthResetPassword from './pages/AuthResetPassword';
+import ProtectedRoute from './components/ProtectedRoute';
+import PublicRoute from './components/PublicRoute';
 
 function App() {
   return (
@@ -13,11 +15,39 @@ function App() {
       <Routes>
         <Route path="/" element={<Homepage />} />
         <Route path="/jobs" element={<JobsHome />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/login" element={<AuthLogin />} />
-        <Route path="/signup" element={<AuthSignup />} />
+        
+        {/* Protected Routes - Require Authentication */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        
+        {/* Public Routes - Redirect to dashboard if already authenticated */}
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <AuthLogin />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            <PublicRoute>
+              <AuthSignup />
+            </PublicRoute>
+          }
+        />
+        
+        {/* Other Auth Pages */}
         <Route path="/forgot-password" element={<AuthForgotPassword />} />
         <Route path="/reset-password" element={<AuthResetPassword />} />
+        
         <Route path="/auth" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

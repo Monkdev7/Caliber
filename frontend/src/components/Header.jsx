@@ -1,13 +1,22 @@
 import { useState } from 'react';
-import { Zap, Briefcase, Menu, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Zap, Briefcase, Menu, X, LogOut } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { mockLogout } from '../lib/auth';
 
 export default function Header({ onScrape, scrapingLinkedIn = false, scrapingNaukri = false }) {
   const [showMenu, setShowMenu] = useState(false);
+  const navigate = useNavigate();
   const isAnyScraping = scrapingLinkedIn || scrapingNaukri;
 
   const handleScrape = async source => {
     await onScrape(source);
+    setShowMenu(false);
+  };
+
+  const handleLogout = () => {
+    // TEMPORARY: Mock logout - clear localStorage and redirect
+    mockLogout();
+    navigate('/login', { replace: true });
     setShowMenu(false);
   };
 
@@ -43,6 +52,14 @@ export default function Header({ onScrape, scrapingLinkedIn = false, scrapingNau
           >
             <Zap size={18} className={scrapingNaukri ? 'animate-spin' : ''} />
             <span>{scrapingNaukri ? 'Scraping...' : 'Scrape Naukri'}</span>
+          </button>
+          <button
+            onClick={handleLogout}
+            className="px-6 py-3 bg-slate-900 border border-slate-800 text-slate-300 rounded-lg hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
+            title="Logout"
+          >
+            <LogOut size={18} />
+            <span>Logout</span>
           </button>
         </nav>
 
@@ -86,6 +103,13 @@ export default function Header({ onScrape, scrapingLinkedIn = false, scrapingNau
             >
               Back to Home
             </Link>
+            <button
+              onClick={handleLogout}
+              className="w-full px-6 py-3 bg-slate-900 border border-slate-800 text-slate-300 rounded-lg hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+            >
+              <LogOut size={18} />
+              <span>Logout</span>
+            </button>
           </div>
         </div>
       )}

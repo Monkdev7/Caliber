@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,6 +8,7 @@ import AuthSplitLayout from '../components/auth/AuthSplitLayout';
 import AuthTextField from '../components/auth/AuthTextField';
 import PasswordStrength from '../components/auth/PasswordStrength';
 import { passwordSchema } from '../lib/authValidation';
+import { mockSignup } from '../lib/auth';
 
 const signupSchema = z.object({
   fullName: z.string().min(2, 'Full name is required.'),
@@ -17,6 +18,7 @@ const signupSchema = z.object({
 
 function AuthSignup() {
   const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -30,8 +32,17 @@ function AuthSignup() {
   const passwordValue = watch('password', '');
 
   const onSubmit = async values => {
-    await new Promise(resolve => setTimeout(resolve, 150));
-    console.info('Signup submit', values);
+    // TEMPORARY: Mock authentication - replace with real API call
+    try {
+      await mockSignup(values.fullName, values.email, values.password);
+      console.info('Signup successful (mock)', values.email);
+      
+      // Redirect to dashboard after successful signup
+      navigate('/dashboard', { replace: true });
+    } catch (error) {
+      console.error('Signup failed:', error);
+      // TODO: Add error handling UI when backend is integrated
+    }
   };
 
   return (

@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import AuthSplitLayout from '../components/auth/AuthSplitLayout';
 import AuthTextField from '../components/auth/AuthTextField';
+import { mockLogin } from '../lib/auth';
 
 const loginSchema = z.object({
     email: z.string().email('Enter a valid email address.'),
@@ -14,6 +15,7 @@ const loginSchema = z.object({
 
 function AuthLogin() {
     const [showPassword, setShowPassword] = useState(false);
+    const navigate = useNavigate();
     const {
         register,
         handleSubmit,
@@ -24,8 +26,17 @@ function AuthLogin() {
     });
 
     const onSubmit = async values => {
-        await new Promise(resolve => setTimeout(resolve, 150));
-        console.info('Login submit', values);
+        // TEMPORARY: Mock authentication - replace with real API call
+        try {
+            await mockLogin(values.email, values.password);
+            console.info('Login successful (mock)', values.email);
+            
+            // Redirect to dashboard after successful login
+            navigate('/dashboard', { replace: true });
+        } catch (error) {
+            console.error('Login failed:', error);
+            // TODO: Add error handling UI when backend is integrated
+        }
     };
 
     return (
