@@ -1,12 +1,18 @@
 import { useState } from 'react';
 import { Zap, Briefcase, Menu, X, LogOut } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { mockLogout } from '../lib/auth';
+import { mockLogout, getCurrentUser } from '../lib/auth';
+import UserProfileBadge from './UserProfileBadge';
 
 export default function Header({ onScrape, scrapingLinkedIn = false, scrapingNaukri = false }) {
   const [showMenu, setShowMenu] = useState(false);
   const navigate = useNavigate();
   const isAnyScraping = scrapingLinkedIn || scrapingNaukri;
+  
+  // TEMPORARY: Get mock user data to check if authenticated
+  // TODO: Replace with proper auth state management when backend is ready
+  const user = getCurrentUser();
+  const isAuthenticated = !!user;
 
   const handleScrape = async source => {
     await onScrape(source);
@@ -53,14 +59,9 @@ export default function Header({ onScrape, scrapingLinkedIn = false, scrapingNau
             <Zap size={18} className={scrapingNaukri ? 'animate-spin' : ''} />
             <span>{scrapingNaukri ? 'Scraping...' : 'Scrape Naukri'}</span>
           </button>
-          <button
-            onClick={handleLogout}
-            className="px-6 py-3 bg-slate-900 border border-slate-800 text-slate-300 rounded-lg hover:bg-slate-800 transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
-            title="Logout"
-          >
-            <LogOut size={18} />
-            <span>Logout</span>
-          </button>
+          
+          {/* User Profile Badge - Only show when authenticated */}
+          {isAuthenticated && <UserProfileBadge />}
         </nav>
 
         {/* Mobile Menu Button */}
@@ -78,6 +79,25 @@ export default function Header({ onScrape, scrapingLinkedIn = false, scrapingNau
       {showMenu && (
         <div className="sm:hidden border-t border-slate-800 bg-slate-950">
           <div className="px-4 py-4 space-y-3">
+            {/* User Info in Mobile Menu */}
+            {isAuthenticated && user && (
+              <div className="px-4 py-3 bg-slate-900 border border-slate-800 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-accent text-white text-sm font-semibold">
+                    {user.name ? user.name.substring(0, 2).toUpperCase() : 'U'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-slate-100 font-semibold text-sm truncate">
+                      {user.name || 'User'}
+                    </p>
+                    <p className="text-slate-400 text-xs truncate">
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <button
               onClick={() => handleScrape('linkedin')}
               disabled={isAnyScraping}
@@ -103,13 +123,15 @@ export default function Header({ onScrape, scrapingLinkedIn = false, scrapingNau
             >
               Back to Home
             </Link>
-            <button
-              onClick={handleLogout}
-              className="w-full px-6 py-3 bg-slate-900 border border-slate-800 text-slate-300 rounded-lg hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
-            >
-              <LogOut size={18} />
-              <span>Logout</span>
-            </button>
+            {isAuthenticated && (
+              <button
+                onClick={handleLogout}
+                className="w-full px-6 py-3 bg-slate-900 border border-slate-800 text-slate-300 rounded-lg hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+              >
+                <LogOut size={18} />
+                <span>Logout</span>
+              </button>
+            )}
           </div>
         </div>
       )}
