@@ -12,7 +12,6 @@ function Dashboard() {
     const [loading, setLoading] = useState(false);
     const [scrapingLinkedIn, setScrapingLinkedIn] = useState(false);
     const [scrapingNaukri, setScrapingNaukri] = useState(false);
-    const [scrapingFromSearch, setScrapingFromSearch] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -20,9 +19,10 @@ function Dashboard() {
     const [sortBy, setSortBy] = useState('date'); // 'date', 'title', 'company', 'location'
     const [sortOrder, setSortOrder] = useState('desc'); // 'asc' or 'desc'
     const [filters, setFilters] = useState({
+        title: '',
         company: '',
         location: '',
-        source: 'all',
+        source: '',
     });
     const [pagination, setPagination] = useState({
         page: 1,
@@ -39,7 +39,7 @@ function Dashboard() {
     // Filter and sort jobs when dependencies change
     useEffect(() => {
         applyFiltersAndSort();
-    }, [filters, jobs, sortBy, sortOrder]);
+    }, [searchTerm, filters, jobs, sortBy, sortOrder]);
 
     // Auto-dismiss success message
     useEffect(() => {
@@ -79,62 +79,6 @@ function Dashboard() {
         }
     };
 
-    const handleSearchSubmit = async (e) => {
-        e?.preventDefault();
-
-        if (!searchTerm.trim()) {
-            setError('Please enter a search query');
-            setTimeout(() => setError(null), 3000);
-            return;
-        }
-
-        try {
-            setScrapingFromSearch(true);
-            setError(null);
-            setSuccess(null);
-
-            // Use search term as keyword, default location
-            const keyword = searchTerm.trim();
-            const location = 'Remote';
-
-            console.log(`🔍 Triggering scrape for: ${keyword}`);
-
-            // Call the scrape all endpoint to scrape both sources
-            const response = await axios.post('/api/scrape/all', {
-                keyword,
-                location,
-                maxPages: 1,
-            });
-
-            if (response.data.success) {
-                // Clear filters
-                setFilters({
-                    company: '',
-                    location: '',
-                    source: 'all',
-                });
-                setShowFilters(false);
-
-                // Fetch updated jobs
-                await fetchJobs();
-
-                // Show success message
-                const linkedInCount = response.data.data?.linkedin?.saved || 0;
-                const naukriCount = response.data.data?.naukri?.saved || 0;
-                const totalCount = linkedInCount + naukriCount;
-
-                setSuccess(`Successfully scraped ${totalCount} jobs (LinkedIn: ${linkedInCount}, Naukri: ${naukriCount})`);
-            } else {
-                setError('Scraping failed — please try again.');
-            }
-        } catch (err) {
-            setError(`Failed to scrape jobs. ${err.response?.data?.message || err.message || ''}`);
-            console.error('Scraping error:', err);
-        } finally {
-            setScrapingFromSearch(false);
-        }
-    };
-
     const triggerScrape = async source => {
         try {
             // Set scraping state for specific source only
@@ -169,9 +113,10 @@ function Dashboard() {
                 // Clear all filters and search
                 setSearchTerm('');
                 setFilters({
+                    title: '',
                     company: '',
                     location: '',
-                    source: 'all',
+                    source: '',
                 });
                 setShowFilters(false);
 
@@ -199,6 +144,31 @@ function Dashboard() {
 
     const applyFiltersAndSort = () => {
         let filtered = [...jobs];
+
+        // Global search filter (searches title, company, and location)
+        if (searchTerm) {
+            const searchLower = searchTerm.toLowerCase();
+            filtered = filtered.filter(
+                job => {
+                    const title = (job.title || job.job_title || '').toLowerCase();
+                    const company = (job.company || job.company_name || '').toLowerCase();
+                    const location = (job.location || '').toLowerCase();
+
+                    return title.includes(searchLower) ||
+                        company.includes(searchLower) ||
+                        location.includes(searchLower);
+                }
+            );
+        }
+
+        // Title filter
+        if (filters.title) {
+            const filterLower = filters.title.toLowerCase();
+            filtered = filtered.filter(job => {
+                const title = (job.title || job.job_title || '').toLowerCase();
+                return title.includes(filterLower);
+            });
+        }
 
         // Company filter
         if (filters.company) {
@@ -259,7 +229,9 @@ function Dashboard() {
     };
 
     const clearAllFilters = () => {
+        setSearchTerm('');
         setFilters({
+            title: '',
             company: '',
             location: '',
             source: 'all',
@@ -279,7 +251,8 @@ function Dashboard() {
     };
 
     const hasActiveFilters = () => {
-        return filters.company || filters.location || (filters.source && filters.source !== 'all');
+        // Only check source filter now (title, company, location removed from UI)
+        return searchTerm || (filters.source && filters.source !== 'all');
     };
 
     const exportToCSV = () => {
@@ -326,7 +299,7 @@ function Dashboard() {
         setSuccess(`Exported ${filteredJobs.length} jobs to CSV!`);
     };
 
-    const isAnyScraping = scrapingLinkedIn || scrapingNaukri || scrapingFromSearch;
+    const isAnyScraping = scrapingLinkedIn || scrapingNaukri;
 
     return (
         <div className="min-h-screen bg-slate-950">
@@ -368,52 +341,28 @@ function Dashboard() {
                 {/* Search and Actions */}
                 <div className="mb-8">
                     <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                        {/* Search Bar with Submit Button */}
-                        <form
-                            onSubmit={handleSearchSubmit}
-                            className="flex gap-2 flex-[2]"
-                        >
-                            <div className="flex-1 relative">
-                                <Search
-                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-                                    size={18}
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="Enter job title, keyword, or company to scrape..."
-                                    className="w-full px-4 pl-10 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    disabled={scrapingFromSearch}
-                                />
-                                {searchTerm && !scrapingFromSearch && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setSearchTerm('')}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-100 transition-colors"
-                                    >
-                                        <X size={16} />
-                                    </button>
-                                )}
-                            </div>
-                            <button
-                                type="submit"
-                                disabled={!searchTerm.trim() || scrapingFromSearch}
-                                className="px-4 py-2.5 bg-accent hover:bg-accent/90 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-all flex items-center gap-2 whitespace-nowrap text-sm"
-                            >
-                                {scrapingFromSearch ? (
-                                    <>
-                                        <Zap size={16} className="animate-spin" />
-                                        Scraping...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Zap size={16} />
-                                        Search
-                                    </>
-                                )}
-                            </button>
-                        </form>
+                        {/* Search Bar - Wider for better UX */}
+                        <div className="flex-1 sm:min-w-[400px] relative">
+                            <Search
+                                className="absolute left-3 top-3 text-slate-400"
+                                size={20}
+                            />
+                            <input
+                                type="text"
+                                placeholder="Search by job title, company, or location..."
+                                className="auth-input pl-10 pr-10 w-full"
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                            />
+                            {searchTerm && (
+                                <button
+                                    onClick={() => setSearchTerm('')}
+                                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-100"
+                                >
+                                    <X size={20} />
+                                </button>
+                            )}
+                        </div>
 
                         {/* Sort Dropdown */}
                         <select
@@ -423,7 +372,7 @@ function Dashboard() {
                                 setSortBy(field);
                                 setSortOrder(order);
                             }}
-                            className="px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all text-sm min-w-[160px]"
+                            className="auth-input"
                         >
                             <option value="date-desc">Newest First</option>
                             <option value="date-asc">Oldest First</option>
@@ -435,19 +384,16 @@ function Dashboard() {
                             <option value="location-desc">Location Z-A</option>
                         </select>
 
-                        {/* Filters Button */}
+                        {/* Filters Button - Smaller, more subtle icon */}
                         <button
                             onClick={() => setShowFilters(!showFilters)}
-                            className={`px-4 py-2.5 font-medium rounded-lg transition-all flex items-center gap-2 text-sm ${showFilters
-                                    ? 'bg-accent text-white'
-                                    : 'bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-800'
-                                }`}
+                            className={`auth-button flex items-center gap-2 ${showFilters ? 'bg-accent/90' : ''}`}
                         >
-                            <Filter size={16} />
+                            <Filter size={14} />
                             Filters
-                            {hasActiveFilters() && (
-                                <span className="bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
-                                    {[filters.company, filters.location, filters.source !== 'all' ? filters.source : null].filter(Boolean).length}
+                            {hasActiveFilters() && !searchTerm && (
+                                <span className="bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                                    !
                                 </span>
                             )}
                         </button>
@@ -456,11 +402,11 @@ function Dashboard() {
                         {hasActiveFilters() && (
                             <button
                                 onClick={clearAllFilters}
-                                className="px-4 py-2.5 bg-slate-900 border border-slate-700 text-slate-300 rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2 text-sm"
+                                className="px-4 py-2 bg-slate-900 border border-slate-800 text-slate-300 rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2"
                                 title="Clear all filters"
                             >
-                                <X size={16} />
-                                Reset
+                                <X size={18} />
+                                Clear
                             </button>
                         )}
 
@@ -468,47 +414,27 @@ function Dashboard() {
                         <button
                             onClick={exportToCSV}
                             disabled={filteredJobs.length === 0}
-                            className="px-4 py-2.5 bg-slate-900 border border-slate-700 text-slate-300 rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2 text-sm"
+                            className="auth-button flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <Download size={16} />
+                            <Download size={18} />
                             Export
                         </button>
                     </div>
 
-                    {/* Active Filters Indicator */}
+                    {/* Active Filters Indicator - Only show search and source */}
                     {hasActiveFilters() && (
                         <div className="flex flex-wrap gap-2 mb-4">
-                            {filters.company && (
-                                <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-700 text-slate-300 rounded-lg text-sm">
-                                    <span className="text-slate-500">Company:</span> {filters.company}
-                                    <button
-                                        onClick={() => setFilters({ ...filters, company: '' })}
-                                        className="text-slate-400 hover:text-slate-100 transition-colors"
-                                    >
-                                        <X size={14} />
-                                    </button>
-                                </span>
-                            )}
-                            {filters.location && (
-                                <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-700 text-slate-300 rounded-lg text-sm">
-                                    <span className="text-slate-500">Location:</span> {filters.location}
-                                    <button
-                                        onClick={() => setFilters({ ...filters, location: '' })}
-                                        className="text-slate-400 hover:text-slate-100 transition-colors"
-                                    >
+                            {searchTerm && (
+                                <span className="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 rounded-full text-sm">
+                                    Search: "{searchTerm}"
+                                    <button onClick={() => setSearchTerm('')}>
                                         <X size={14} />
                                     </button>
                                 </span>
                             )}
                             {filters.source && filters.source !== 'all' && (
-                                <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-700 text-slate-300 rounded-lg text-sm">
-                                    <span className="text-slate-500">Source:</span> {filters.source.charAt(0).toUpperCase() + filters.source.slice(1)}
-                                    <button
-                                        onClick={() => setFilters({ ...filters, source: 'all' })}
-                                        className="text-slate-400 hover:text-slate-100 transition-colors"
-                                    >
-                                        <X size={14} />
-                                    </button>
+                                <span className="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 rounded-full text-sm">
+                                    Source: {filters.source.charAt(0).toUpperCase() + filters.source.slice(1)}
                                 </span>
                             )}
                         </div>
@@ -559,7 +485,6 @@ function Dashboard() {
                         <div className="flex items-center justify-center gap-3">
                             <Zap className="animate-spin text-accent" size={24} />
                             <span className="text-slate-300 font-medium">
-                                {scrapingFromSearch && 'Fetching latest jobs from LinkedIn & Naukri...'}
                                 {scrapingLinkedIn && 'Scraping LinkedIn jobs...'}
                                 {scrapingNaukri && 'Scraping Naukri jobs...'}
                                 {' This may take a moment.'}
