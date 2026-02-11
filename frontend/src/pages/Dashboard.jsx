@@ -9,24 +9,24 @@ import '../App.css';
 // Utility function to parse relative time strings like "2 days ago" into timestamps
 const parseTimePosted = (timePosted) => {
     if (!timePosted) return 0;
-    
+
     // If it's already a valid date string, parse it
     const directDate = new Date(timePosted);
     if (!isNaN(directDate.getTime())) {
         return directDate.getTime();
     }
-    
+
     // Parse relative time strings like "2 days ago", "1 week ago", etc.
     const now = Date.now();
     const timeString = timePosted.toLowerCase().trim();
-    
+
     // Match patterns like "X hours/days/weeks/months ago"
     const match = timeString.match(/(\d+)\s*(minute|hour|day|week|month|year)s?\s*ago/);
-    
+
     if (match) {
         const value = parseInt(match[1], 10);
         const unit = match[2];
-        
+
         const milliseconds = {
             minute: 60 * 1000,
             hour: 60 * 60 * 1000,
@@ -35,20 +35,20 @@ const parseTimePosted = (timePosted) => {
             month: 30 * 24 * 60 * 60 * 1000,
             year: 365 * 24 * 60 * 60 * 1000,
         };
-        
+
         return now - (value * (milliseconds[unit] || 0));
     }
-    
+
     // Handle "Just now" or "Today"
     if (timeString.includes('just now') || timeString.includes('today')) {
         return now;
     }
-    
+
     // Handle "Yesterday"
     if (timeString.includes('yesterday')) {
         return now - (24 * 60 * 60 * 1000);
     }
-    
+
     // Default to 0 if unparseable
     return 0;
 };
@@ -493,8 +493,8 @@ function Dashboard() {
                         <button
                             onClick={() => setShowFilters(!showFilters)}
                             className={`px-4 py-2.5 font-medium rounded-lg transition-all flex items-center gap-2 text-sm ${showFilters
-                                    ? 'bg-accent text-white'
-                                    : 'bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-800'
+                                ? 'bg-accent text-white'
+                                : 'bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-800'
                                 }`}
                         >
                             <Filter size={16} />
