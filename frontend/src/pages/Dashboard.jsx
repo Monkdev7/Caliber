@@ -6,12 +6,60 @@ import JobCard from '../components/JobCard';
 import FilterPanel from '../components/FilterPanel';
 import '../App.css';
 
+// Utility function to parse relative time strings like "2 days ago" into timestamps
+const parseTimePosted = (timePosted) => {
+    if (!timePosted) return 0;
+    
+    // If it's already a valid date string, parse it
+    const directDate = new Date(timePosted);
+    if (!isNaN(directDate.getTime())) {
+        return directDate.getTime();
+    }
+    
+    // Parse relative time strings like "2 days ago", "1 week ago", etc.
+    const now = Date.now();
+    const timeString = timePosted.toLowerCase().trim();
+    
+    // Match patterns like "X hours/days/weeks/months ago"
+    const match = timeString.match(/(\d+)\s*(minute|hour|day|week|month|year)s?\s*ago/);
+    
+    if (match) {
+        const value = parseInt(match[1], 10);
+        const unit = match[2];
+        
+        const milliseconds = {
+            minute: 60 * 1000,
+            hour: 60 * 60 * 1000,
+            day: 24 * 60 * 60 * 1000,
+            week: 7 * 24 * 60 * 60 * 1000,
+            month: 30 * 24 * 60 * 60 * 1000,
+            year: 365 * 24 * 60 * 60 * 1000,
+        };
+        
+        return now - (value * (milliseconds[unit] || 0));
+    }
+    
+    // Handle "Just now" or "Today"
+    if (timeString.includes('just now') || timeString.includes('today')) {
+        return now;
+    }
+    
+    // Handle "Yesterday"
+    if (timeString.includes('yesterday')) {
+        return now - (24 * 60 * 60 * 1000);
+    }
+    
+    // Default to 0 if unparseable
+    return 0;
+};
+
 function Dashboard() {
     const [jobs, setJobs] = useState([]);
     const [filteredJobs, setFilteredJobs] = useState([]);
     const [loading, setLoading] = useState(false);
     const [scrapingLinkedIn, setScrapingLinkedIn] = useState(false);
     const [scrapingNaukri, setScrapingNaukri] = useState(false);
+    const [scrapingFromSearch, setScrapingFromSearch] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -19,10 +67,9 @@ function Dashboard() {
     const [sortBy, setSortBy] = useState('date'); // 'date', 'title', 'company', 'location'
     const [sortOrder, setSortOrder] = useState('desc'); // 'asc' or 'desc'
     const [filters, setFilters] = useState({
-        title: '',
         company: '',
         location: '',
-        source: '',
+        source: 'all',
     });
     const [pagination, setPagination] = useState({
         page: 1,
@@ -39,7 +86,7 @@ function Dashboard() {
     // Filter and sort jobs when dependencies change
     useEffect(() => {
         applyFiltersAndSort();
-    }, [searchTerm, filters, jobs, sortBy, sortOrder]);
+    }, [filters, jobs, sortBy, sortOrder]);
 
     // Auto-dismiss success message
     useEffect(() => {
@@ -79,6 +126,64 @@ function Dashboard() {
         }
     };
 
+    const handleSearchSubmit = async (e) => {
+        e?.preventDefault();
+
+        if (!searchTerm.trim()) {
+            setError('Please enter a search query');
+            setTimeout(() => setError(null), 3000);
+            return;
+        }
+
+        try {
+            setScrapingFromSearch(true);
+            setError(null);
+            setSuccess(null);
+
+            // Parse search input: use comma to separate job title and location
+            // Examples: "frontend" -> only title, "frontend, delhi" -> title + location
+            const parts = searchTerm.trim().split(',').map(part => part.trim());
+            const keyword = parts[0]; // First part is the job title
+            const location = parts[1] || ''; // Second part is location (if provided)
+
+            console.log(`🔍 Triggering scrape for: "${keyword}"${location ? ` in "${location}"` : ' (all locations)'}`);
+
+            // Call the scrape all endpoint to scrape both sources
+            const response = await axios.post('/api/scrape/all', {
+                keyword,
+                location: location || undefined, // Send undefined if no location to let backend handle it
+                maxPages: 1,
+            });
+
+            if (response.data.success) {
+                // Clear filters
+                setFilters({
+                    company: '',
+                    location: '',
+                    source: 'all',
+                });
+                setShowFilters(false);
+
+                // Fetch updated jobs
+                await fetchJobs();
+
+                // Show success message
+                const linkedInCount = response.data.data?.linkedin?.saved || 0;
+                const naukriCount = response.data.data?.naukri?.saved || 0;
+                const totalCount = linkedInCount + naukriCount;
+
+                setSuccess(`Successfully scraped ${totalCount} jobs (LinkedIn: ${linkedInCount}, Naukri: ${naukriCount})`);
+            } else {
+                setError('Scraping failed — please try again.');
+            }
+        } catch (err) {
+            setError(`Failed to scrape jobs. ${err.response?.data?.message || err.message || ''}`);
+            console.error('Scraping error:', err);
+        } finally {
+            setScrapingFromSearch(false);
+        }
+    };
+
     const triggerScrape = async source => {
         try {
             // Set scraping state for specific source only
@@ -113,10 +218,9 @@ function Dashboard() {
                 // Clear all filters and search
                 setSearchTerm('');
                 setFilters({
-                    title: '',
                     company: '',
                     location: '',
-                    source: '',
+                    source: 'all',
                 });
                 setShowFilters(false);
 
@@ -144,31 +248,6 @@ function Dashboard() {
 
     const applyFiltersAndSort = () => {
         let filtered = [...jobs];
-
-        // Global search filter (searches title, company, and location)
-        if (searchTerm) {
-            const searchLower = searchTerm.toLowerCase();
-            filtered = filtered.filter(
-                job => {
-                    const title = (job.title || job.job_title || '').toLowerCase();
-                    const company = (job.company || job.company_name || '').toLowerCase();
-                    const location = (job.location || '').toLowerCase();
-
-                    return title.includes(searchLower) ||
-                        company.includes(searchLower) ||
-                        location.includes(searchLower);
-                }
-            );
-        }
-
-        // Title filter
-        if (filters.title) {
-            const filterLower = filters.title.toLowerCase();
-            filtered = filtered.filter(job => {
-                const title = (job.title || job.job_title || '').toLowerCase();
-                return title.includes(filterLower);
-            });
-        }
 
         // Company filter
         if (filters.company) {
@@ -210,9 +289,9 @@ function Dashboard() {
                     break;
                 case 'date':
                 default:
-                    // Use updatedAt or createdAt from backend for proper date sorting
-                    compareA = new Date(a.updatedAt || a.createdAt || a.scraped_at || a.posted_date || 0);
-                    compareB = new Date(b.updatedAt || b.createdAt || b.scraped_at || b.posted_date || 0);
+                    // Use ONLY timePosted field for date sorting
+                    compareA = parseTimePosted(a.timePosted);
+                    compareB = parseTimePosted(b.timePosted);
                     break;
             }
 
@@ -229,9 +308,7 @@ function Dashboard() {
     };
 
     const clearAllFilters = () => {
-        setSearchTerm('');
         setFilters({
-            title: '',
             company: '',
             location: '',
             source: 'all',
@@ -251,8 +328,7 @@ function Dashboard() {
     };
 
     const hasActiveFilters = () => {
-        // Only check source filter now (title, company, location removed from UI)
-        return searchTerm || (filters.source && filters.source !== 'all');
+        return filters.company || filters.location || (filters.source && filters.source !== 'all');
     };
 
     const exportToCSV = () => {
@@ -299,10 +375,10 @@ function Dashboard() {
         setSuccess(`Exported ${filteredJobs.length} jobs to CSV!`);
     };
 
-    const isAnyScraping = scrapingLinkedIn || scrapingNaukri;
+    const isAnyScraping = scrapingLinkedIn || scrapingNaukri || scrapingFromSearch;
 
     return (
-        <div className="min-h-screen bg-slate-950">
+        <div className="min-h-screen bg-slate-950 flex flex-col">
             <Header
                 onScrape={triggerScrape}
                 scrapingLinkedIn={scrapingLinkedIn}
@@ -310,7 +386,7 @@ function Dashboard() {
             />
 
             {/* Main Content */}
-            <main className="max-w-7xl mx-auto px-4 py-8">
+            <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
                 {/* Success Alert */}
                 {success && (
                     <div className="mb-6 p-4 bg-slate-900 border border-slate-800 text-slate-100 rounded-lg animate-fade-in flex items-center gap-3">
@@ -341,28 +417,57 @@ function Dashboard() {
                 {/* Search and Actions */}
                 <div className="mb-8">
                     <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                        {/* Search Bar - Wider for better UX */}
-                        <div className="flex-1 sm:min-w-[400px] relative">
-                            <Search
-                                className="absolute left-3 top-3 text-slate-400"
-                                size={20}
-                            />
-                            <input
-                                type="text"
-                                placeholder="Search by job title, company, or location..."
-                                className="auth-input pl-10 pr-10 w-full"
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                            />
-                            {searchTerm && (
-                                <button
-                                    onClick={() => setSearchTerm('')}
-                                    className="absolute right-3 top-3 text-slate-400 hover:text-slate-100"
-                                >
-                                    <X size={20} />
-                                </button>
-                            )}
-                        </div>
+                        {/* Search Bar with Submit Button */}
+                        <form
+                            onSubmit={handleSearchSubmit}
+                            className="flex gap-2 flex-[2]"
+                        >
+                            <div className="flex-1 relative">
+                                <Search
+                                    className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                                    size={18}
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="e.g., 'frontend' or 'frontend, delhi' to scrape jobs..."
+                                    className="w-full px-4 pl-10 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    disabled={scrapingFromSearch}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            handleSearchSubmit(e);
+                                        }
+                                    }}
+                                />
+                                {searchTerm && !scrapingFromSearch && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setSearchTerm('')}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-100 transition-colors"
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                )}
+                            </div>
+                            <button
+                                type="submit"
+                                disabled={!searchTerm.trim() || scrapingFromSearch}
+                                className="px-4 py-2.5 bg-accent hover:bg-accent/90 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-all flex items-center gap-2 whitespace-nowrap text-sm"
+                            >
+                                {scrapingFromSearch ? (
+                                    <>
+                                        <Zap size={16} className="animate-spin" />
+                                        Scraping...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Zap size={16} />
+                                        Search
+                                    </>
+                                )}
+                            </button>
+                        </form>
 
                         {/* Sort Dropdown */}
                         <select
@@ -372,7 +477,7 @@ function Dashboard() {
                                 setSortBy(field);
                                 setSortOrder(order);
                             }}
-                            className="auth-input"
+                            className="px-4 py-2.5 bg-slate-900 border border-slate-700 rounded-lg text-slate-100 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all text-sm min-w-[160px]"
                         >
                             <option value="date-desc">Newest First</option>
                             <option value="date-asc">Oldest First</option>
@@ -384,16 +489,19 @@ function Dashboard() {
                             <option value="location-desc">Location Z-A</option>
                         </select>
 
-                        {/* Filters Button - Smaller, more subtle icon */}
+                        {/* Filters Button */}
                         <button
                             onClick={() => setShowFilters(!showFilters)}
-                            className={`auth-button flex items-center gap-2 ${showFilters ? 'bg-accent/90' : ''}`}
+                            className={`px-4 py-2.5 font-medium rounded-lg transition-all flex items-center gap-2 text-sm ${showFilters
+                                    ? 'bg-accent text-white'
+                                    : 'bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-800'
+                                }`}
                         >
-                            <Filter size={14} />
+                            <Filter size={16} />
                             Filters
-                            {hasActiveFilters() && !searchTerm && (
-                                <span className="bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                    !
+                            {hasActiveFilters() && (
+                                <span className="bg-rose-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+                                    {[filters.company, filters.location, filters.source !== 'all' ? filters.source : null].filter(Boolean).length}
                                 </span>
                             )}
                         </button>
@@ -402,11 +510,11 @@ function Dashboard() {
                         {hasActiveFilters() && (
                             <button
                                 onClick={clearAllFilters}
-                                className="px-4 py-2 bg-slate-900 border border-slate-800 text-slate-300 rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2"
+                                className="px-4 py-2.5 bg-slate-900 border border-slate-700 text-slate-300 rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-2 text-sm"
                                 title="Clear all filters"
                             >
-                                <X size={18} />
-                                Clear
+                                <X size={16} />
+                                Reset
                             </button>
                         )}
 
@@ -414,27 +522,47 @@ function Dashboard() {
                         <button
                             onClick={exportToCSV}
                             disabled={filteredJobs.length === 0}
-                            className="auth-button flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2.5 bg-slate-900 border border-slate-700 text-slate-300 rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2 text-sm"
                         >
-                            <Download size={18} />
+                            <Download size={16} />
                             Export
                         </button>
                     </div>
 
-                    {/* Active Filters Indicator - Only show search and source */}
+                    {/* Active Filters Indicator */}
                     {hasActiveFilters() && (
                         <div className="flex flex-wrap gap-2 mb-4">
-                            {searchTerm && (
-                                <span className="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 rounded-full text-sm">
-                                    Search: "{searchTerm}"
-                                    <button onClick={() => setSearchTerm('')}>
+                            {filters.company && (
+                                <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-700 text-slate-300 rounded-lg text-sm">
+                                    <span className="text-slate-500">Company:</span> {filters.company}
+                                    <button
+                                        onClick={() => setFilters({ ...filters, company: '' })}
+                                        className="text-slate-400 hover:text-slate-100 transition-colors"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </span>
+                            )}
+                            {filters.location && (
+                                <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-700 text-slate-300 rounded-lg text-sm">
+                                    <span className="text-slate-500">Location:</span> {filters.location}
+                                    <button
+                                        onClick={() => setFilters({ ...filters, location: '' })}
+                                        className="text-slate-400 hover:text-slate-100 transition-colors"
+                                    >
                                         <X size={14} />
                                     </button>
                                 </span>
                             )}
                             {filters.source && filters.source !== 'all' && (
-                                <span className="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 border border-slate-800 text-slate-300 rounded-full text-sm">
-                                    Source: {filters.source.charAt(0).toUpperCase() + filters.source.slice(1)}
+                                <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-700 text-slate-300 rounded-lg text-sm">
+                                    <span className="text-slate-500">Source:</span> {filters.source.charAt(0).toUpperCase() + filters.source.slice(1)}
+                                    <button
+                                        onClick={() => setFilters({ ...filters, source: 'all' })}
+                                        className="text-slate-400 hover:text-slate-100 transition-colors"
+                                    >
+                                        <X size={14} />
+                                    </button>
                                 </span>
                             )}
                         </div>
@@ -485,6 +613,7 @@ function Dashboard() {
                         <div className="flex items-center justify-center gap-3">
                             <Zap className="animate-spin text-accent" size={24} />
                             <span className="text-slate-300 font-medium">
+                                {scrapingFromSearch && 'Fetching latest jobs from LinkedIn & Naukri...'}
                                 {scrapingLinkedIn && 'Scraping LinkedIn jobs...'}
                                 {scrapingNaukri && 'Scraping Naukri jobs...'}
                                 {' This may take a moment.'}
@@ -570,7 +699,7 @@ function Dashboard() {
             </main>
 
             {/* Footer */}
-            <footer className="bg-slate-900 border-t border-slate-800 py-6 mt-12">
+            <footer className="bg-slate-900 border-t border-slate-800 py-6 mt-auto">
                 <div className="max-w-7xl mx-auto px-4 text-center text-slate-400">
                     <p>&copy; 2026 Caliber Job Scraper. All rights reserved.</p>
                 </div>
