@@ -122,7 +122,7 @@ function Dashboard() {
                 const linkedInCount = response.data.data?.linkedin?.saved || 0;
                 const naukriCount = response.data.data?.naukri?.saved || 0;
                 const totalCount = linkedInCount + naukriCount;
-                
+
                 setSuccess(`Successfully scraped ${totalCount} jobs (LinkedIn: ${linkedInCount}, Naukri: ${naukriCount})`);
             } else {
                 setError('Scraping failed — please try again.');
@@ -369,7 +369,7 @@ function Dashboard() {
                 <div className="mb-8">
                     <div className="flex flex-col sm:flex-row gap-4 mb-6">
                         {/* Search Bar with Submit Button */}
-                        <form 
+                        <form
                             onSubmit={handleSearchSubmit}
                             className="flex gap-2 flex-[2]"
                         >
@@ -438,11 +438,10 @@ function Dashboard() {
                         {/* Filters Button */}
                         <button
                             onClick={() => setShowFilters(!showFilters)}
-                            className={`px-4 py-2.5 font-medium rounded-lg transition-all flex items-center gap-2 text-sm ${
-                                showFilters 
-                                    ? 'bg-accent text-white' 
+                            className={`px-4 py-2.5 font-medium rounded-lg transition-all flex items-center gap-2 text-sm ${showFilters
+                                    ? 'bg-accent text-white'
                                     : 'bg-slate-900 border border-slate-700 text-slate-300 hover:bg-slate-800'
-                            }`}
+                                }`}
                         >
                             <Filter size={16} />
                             Filters
@@ -482,7 +481,7 @@ function Dashboard() {
                             {filters.company && (
                                 <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-700 text-slate-300 rounded-lg text-sm">
                                     <span className="text-slate-500">Company:</span> {filters.company}
-                                    <button 
+                                    <button
                                         onClick={() => setFilters({ ...filters, company: '' })}
                                         className="text-slate-400 hover:text-slate-100 transition-colors"
                                     >
@@ -493,7 +492,7 @@ function Dashboard() {
                             {filters.location && (
                                 <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-700 text-slate-300 rounded-lg text-sm">
                                     <span className="text-slate-500">Location:</span> {filters.location}
-                                    <button 
+                                    <button
                                         onClick={() => setFilters({ ...filters, location: '' })}
                                         className="text-slate-400 hover:text-slate-100 transition-colors"
                                     >
@@ -504,7 +503,7 @@ function Dashboard() {
                             {filters.source && filters.source !== 'all' && (
                                 <span className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-900 border border-slate-700 text-slate-300 rounded-lg text-sm">
                                     <span className="text-slate-500">Source:</span> {filters.source.charAt(0).toUpperCase() + filters.source.slice(1)}
-                                    <button 
+                                    <button
                                         onClick={() => setFilters({ ...filters, source: 'all' })}
                                         className="text-slate-400 hover:text-slate-100 transition-colors"
                                     >
