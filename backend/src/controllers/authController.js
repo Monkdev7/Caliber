@@ -95,6 +95,26 @@ class AuthController {
         }
     }
 
+    async me(req, res, next) {
+        try {
+            const user = await authService.getUserById(req.user?.id);
+
+            res.status(200).json({
+                success: true,
+                message: 'Authenticated',
+                data: {
+                    user: {
+                        id: user._id,
+                        fullName: user.fullName,
+                        email: user.email,
+                    },
+                },
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+
     async forgotPassword(req, res) {
         res.status(503).json({
             success: false,

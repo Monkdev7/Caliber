@@ -8,7 +8,7 @@ import AuthSplitLayout from '../components/auth/AuthSplitLayout';
 import AuthTextField from '../components/auth/AuthTextField';
 import PasswordStrength from '../components/auth/PasswordStrength';
 import { passwordSchema } from '../lib/authValidation';
-import { mockSignup } from '../lib/auth';
+import { signup } from '../lib/auth';
 
 const signupSchema = z.object({
   fullName: z.string().min(2, 'Full name is required.'),
@@ -19,6 +19,7 @@ const signupSchema = z.object({
 function AuthSignup() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const [authError, setAuthError] = useState('');
   const {
     register,
     handleSubmit,
@@ -32,16 +33,14 @@ function AuthSignup() {
   const passwordValue = watch('password', '');
 
   const onSubmit = async values => {
-    // TEMPORARY: Mock authentication - replace with real API call
     try {
-      await mockSignup(values.fullName, values.email, values.password);
-      console.info('Signup successful (mock)', values.email);
+      setAuthError('');
+      await signup(values.fullName, values.email, values.password);
 
       // Redirect to dashboard after successful signup
       navigate('/dashboard', { replace: true });
     } catch (error) {
-      console.error('Signup failed:', error);
-      // TODO: Add error handling UI when backend is integrated
+      setAuthError(error.message || 'Signup failed. Please try again.');
     }
   };
 
@@ -111,6 +110,11 @@ function AuthSignup() {
       }
     >
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+        {authError ? (
+          <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+            {authError}
+          </div>
+        ) : null}
         <AuthTextField
           id="signup-name"
           name="fullName"

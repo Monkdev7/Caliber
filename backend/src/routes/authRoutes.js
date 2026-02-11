@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import authController from '../controllers/authController.js';
+import requireAuth from '../middleware/requireAuth.js';
 import {
     authLimiter,
     passwordResetLimiter,
@@ -45,5 +46,7 @@ router.post(
     authLimiter,
     authController.logout.bind(authController),
 );
+
+router.get('/me', requireAuth, authController.me.bind(authController));
 
 export default router;

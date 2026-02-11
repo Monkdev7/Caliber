@@ -1,106 +1,137 @@
-/**
- * TEMPORARY FRONTEND-ONLY AUTHENTICATION
- * 
- * This is a mock authentication system for development purposes.
- * It uses localStorage to simulate authentication state.
- * 
- * TODO: Replace this entire file with real backend authentication
- * when the backend auth API is ready.
- */
+const rawBase = import.meta.env.VITE_API_URL || '';
+const API_BASE = rawBase.replace(/\/?api\/?$/, '').replace(/\/$/, '');
 
-const AUTH_TOKEN_KEY = 'caliber_mock_auth_token';
-const AUTH_USER_KEY = 'caliber_mock_auth_user';
+let csrfToken = null;
+let cachedUser = null;
 
-/**
- * Simulates user login by storing a mock token in localStorage
- * @param {string} email - User's email
- * @param {string} password - User's password (not validated in mock)
- * @returns {Promise<object>} Mock user data
- */
-export const mockLogin = async (email, password) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    // Create mock token and user data
-    const mockToken = `mock_token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const mockUser = {
-        email,
-        name: email.split('@')[0],
-        id: `user_${Math.random().toString(36).substr(2, 9)}`,
-        loginTime: new Date().toISOString(),
-    };
-
-    // Store in localStorage
-    localStorage.setItem(AUTH_TOKEN_KEY, mockToken);
-    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(mockUser));
-
-    return mockUser;
-};
-
-/**
- * Simulates user signup by storing a mock token in localStorage
- * @param {string} fullName - User's full name
- * @param {string} email - User's email
- * @param {string} password - User's password (not validated in mock)
- * @returns {Promise<object>} Mock user data
- */
-export const mockSignup = async (fullName, email, password) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    // Create mock token and user data
-    const mockToken = `mock_token_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const mockUser = {
-        email,
-        name: fullName,
-        id: `user_${Math.random().toString(36).substr(2, 9)}`,
-        signupTime: new Date().toISOString(),
-    };
-
-    // Store in localStorage
-    localStorage.setItem(AUTH_TOKEN_KEY, mockToken);
-    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(mockUser));
-
-    return mockUser;
-};
-
-/**
- * Logs out the user by removing auth data from localStorage
- */
-export const mockLogout = () => {
-    localStorage.removeItem(AUTH_TOKEN_KEY);
-    localStorage.removeItem(AUTH_USER_KEY);
-};
-
-/**
- * Checks if user is authenticated by looking for token in localStorage
- * @returns {boolean} True if user is authenticated
- */
-export const isAuthenticated = () => {
-    const token = localStorage.getItem(AUTH_TOKEN_KEY);
-    return !!token;
-};
-
-/**
- * Gets the current user data from localStorage
- * @returns {object|null} User data or null if not authenticated
- */
-export const getCurrentUser = () => {
-    const userStr = localStorage.getItem(AUTH_USER_KEY);
-    if (!userStr) return null;
-
+const parseJson = async response => {
     try {
-        return JSON.parse(userStr);
-    } catch (e) {
-        console.error('Failed to parse user data:', e);
+        return await response.json();
+    } catch (error) {
         return null;
     }
 };
 
-/**
- * Gets the mock token from localStorage
- * @returns {string|null} Token or null if not authenticated
- */
-export const getToken = () => {
-    return localStorage.getItem(AUTH_TOKEN_KEY);
+const getErrorMessage = data =>
+    data?.message || data?.error || 'Request failed';
+
+const withCredentials = {
+    credentials: 'include',
+};
+
+const ensureCsrfToken = async () => {
+    if (csrfToken !== null) return csrfToken;
+
+    const response = await fetch(`${API_BASE}/api/security/csrf`, {
+        ...withCredentials,
+    });
+    const data = await parseJson(response);
+
+    if (!response.ok) {
+        throw new Error(getErrorMessage(data));
+    }
+
+    csrfToken = data?.csrfToken || null;
+    return csrfToken;
+};
+
+const apiRequest = async (path, options = {}) => {
+    const { method = 'GET', body, requireCsrf = false } = options;
+    const headers = { 'Content-Type': 'application/json' };
+
+    if (requireCsrf) {
+        const token = await ensureCsrfToken();
+        if (token) {
+            headers['X-CSRF-Token'] = token;
+        }
+    }
+
+    const response = await fetch(`${API_BASE}${path}`, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined,
+        ...withCredentials,
+    });
+
+    const data = await parseJson(response);
+
+    if (!response.ok || data?.success === false) {
+        const error = new Error(getErrorMessage(data));
+        error.status = response.status;
+        error.data = data;
+        throw error;
+    }
+
+    return data;
+};
+
+const normalizeUser = user => {
+    if (!user) return null;
+    return {
+        id: user.id || user._id || null,
+        fullName: user.fullName || user.name || '',
+        email: user.email || '',
+    };
+};
+
+export const getCachedUser = () => cachedUser;
+
+export const signup = async (fullName, email, password) => {
+    const data = await apiRequest('/api/auth/signup', {
+        method: 'POST',
+        body: { fullName, email, password },
+        requireCsrf: true,
+    });
+
+    cachedUser = normalizeUser(data?.data?.user);
+    return cachedUser;
+};
+
+export const login = async (email, password) => {
+    const data = await apiRequest('/api/auth/login', {
+        method: 'POST',
+        body: { email, password },
+        requireCsrf: true,
+    });
+
+    cachedUser = normalizeUser(data?.data?.user);
+    return cachedUser;
+};
+
+export const logout = async () => {
+    await apiRequest('/api/auth/logout', {
+        method: 'POST',
+        requireCsrf: true,
+    });
+
+    cachedUser = null;
+};
+
+export const refreshSession = async () => {
+    const data = await apiRequest('/api/auth/refresh', {
+        method: 'POST',
+        requireCsrf: true,
+    });
+
+    cachedUser = normalizeUser(data?.data?.user);
+    return cachedUser;
+};
+
+export const getSession = async () => {
+    try {
+        const data = await apiRequest('/api/auth/me');
+        cachedUser = normalizeUser(data?.data?.user);
+        return cachedUser;
+    } catch (error) {
+        if (error.status === 401) {
+            try {
+                return await refreshSession();
+            } catch (refreshError) {
+                cachedUser = null;
+                return null;
+            }
+        }
+
+        throw error;
+    }
 };

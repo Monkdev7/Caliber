@@ -30,6 +30,19 @@ const generateAccessToken = user =>
     );
 
 class AuthService {
+    async getUserById(userId) {
+        if (!userId) {
+            throw new AppError('Authentication required', 401);
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            throw new AppError('User not found', 404);
+        }
+
+        return user;
+    }
+
     async signup({ fullName, email, password }) {
         if (!fullName || !email || !password) {
             throw new AppError('Full name, email, and password are required', 400);

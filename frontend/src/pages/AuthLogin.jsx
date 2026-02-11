@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import AuthSplitLayout from '../components/auth/AuthSplitLayout';
 import AuthTextField from '../components/auth/AuthTextField';
-import { mockLogin } from '../lib/auth';
+import { login } from '../lib/auth';
 
 const loginSchema = z.object({
     email: z.string().email('Enter a valid email address.'),
@@ -16,6 +16,7 @@ const loginSchema = z.object({
 function AuthLogin() {
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
+    const [authError, setAuthError] = useState('');
     const {
         register,
         handleSubmit,
@@ -26,16 +27,14 @@ function AuthLogin() {
     });
 
     const onSubmit = async values => {
-        // TEMPORARY: Mock authentication - replace with real API call
         try {
-            await mockLogin(values.email, values.password);
-            console.info('Login successful (mock)', values.email);
+            setAuthError('');
+            await login(values.email, values.password);
 
             // Redirect to dashboard after successful login
             navigate('/dashboard', { replace: true });
         } catch (error) {
-            console.error('Login failed:', error);
-            // TODO: Add error handling UI when backend is integrated
+            setAuthError(error.message || 'Login failed. Please try again.');
         }
     };
 
@@ -55,6 +54,11 @@ function AuthLogin() {
             }
         >
             <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+                {authError ? (
+                    <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                        {authError}
+                    </div>
+                ) : null}
                 <AuthTextField
                     id="login-email"
                     name="email"
