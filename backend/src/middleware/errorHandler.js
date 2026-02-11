@@ -9,7 +9,7 @@ const errorHandler = (err, req, res, next) => {
     const errors = Object.values(err.errors).map(e => e.message);
     return res.status(400).json({
       success: false,
-      error: 'Validation Error',
+      message: 'Validation Error',
       details: errors,
     });
   }
@@ -18,7 +18,7 @@ const errorHandler = (err, req, res, next) => {
   if (err.code === 11000) {
     return res.status(400).json({
       success: false,
-      error: 'Duplicate entry',
+      message: 'Duplicate entry',
       details: 'This job already exists in the database',
     });
   }
@@ -27,14 +27,22 @@ const errorHandler = (err, req, res, next) => {
   if (err.name === 'CastError') {
     return res.status(400).json({
       success: false,
-      error: 'Invalid ID format',
+      message: 'Invalid ID format',
+    });
+  }
+
+  // CSRF token errors
+  if (err.code === 'EBADCSRFTOKEN') {
+    return res.status(403).json({
+      success: false,
+      message: 'Invalid CSRF token',
     });
   }
 
   // Default error
   res.status(err.statusCode || 500).json({
     success: false,
-    error: err.message || 'Internal Server Error',
+    message: err.message || 'Internal Server Error',
     ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
 };
