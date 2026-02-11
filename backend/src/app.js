@@ -2,17 +2,36 @@ import express from 'express';
 import cors from 'cors';
 import multer from 'multer';
 import pkg from 'body-parser';
+import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import jobRoutes from './routes/jobRoutes.js';
 import scrapeRoutes from './routes/scrapeRoutes.js';
+import authRoutes from './routes/authRoutes.js';
+import securityRoutes from './routes/securityRoutes.js';
 import errorHandler from './middleware/errorHandler.js';
 
 const { json, urlencoded } = pkg;
 const app = express();
+app.set('trust proxy', 1);
 
 // Middleware
-app.use(cors());
+const corsOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: corsOrigins,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
+  }),
+);
+app.use(helmet());
 app.use(json());
 app.use(urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // Upload
 const storage = multer.diskStorage({
@@ -64,6 +83,8 @@ app.post('/api/upload', upload.single('pdfFile'), (req, res) => {
 // Routes
 app.use('/api/jobs', jobRoutes);
 app.use('/api/scrape', scrapeRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/security', securityRoutes);
 
 // 404 handler
 app.use((req, res) => {

@@ -1,24 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { User, ChevronDown, LogOut, Mail } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { getCurrentUser, mockLogout } from '../lib/auth';
+import { ChevronDown, LogOut, Mail } from 'lucide-react';
 
-/**
- * TEMPORARY: User Profile Badge Component
- *
- * Displays user avatar/badge with dropdown menu showing user info.
- * Currently uses mock data from localStorage.
- *
- * TODO: Replace with real user data from backend API when auth is integrated.
- */
-export default function UserProfileBadge() {
+export default function UserProfileBadge({ user, onLogout }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const navigate = useNavigate();
-
-  // TEMPORARY: Get mock user data from localStorage
-  // TODO: Replace with API call to fetch real user data
-  const user = getCurrentUser();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -37,22 +22,21 @@ export default function UserProfileBadge() {
     };
   }, [isOpen]);
 
-  const handleLogout = () => {
-    // TEMPORARY: Mock logout - clear localStorage and redirect
-    // TODO: Replace with API call to logout endpoint
-    mockLogout();
+  const handleLogout = async () => {
+    if (onLogout) {
+      await onLogout();
+    }
     setIsOpen(false);
-    navigate('/', { replace: true });
   };
 
   // Get user initials for avatar
-  const getInitials = name => {
-    if (!name) return 'U';
-    const parts = name.trim().split(' ');
+  const getInitials = fullName => {
+    if (!fullName) return 'U';
+    const parts = fullName.trim().split(' ');
     if (parts.length >= 2) {
       return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
     }
-    return name.substring(0, 2).toUpperCase();
+    return fullName.substring(0, 2).toUpperCase();
   };
 
   if (!user) return null;
@@ -68,12 +52,12 @@ export default function UserProfileBadge() {
       >
         {/* Avatar Circle */}
         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-accent text-white text-sm font-semibold">
-          {getInitials(user.name)}
+          {getInitials(user.fullName)}
         </div>
 
         {/* User Name (Desktop only) */}
         <span className="hidden md:block text-slate-100 text-sm font-medium max-w-[120px] truncate">
-          {user.name || 'User'}
+          {user.fullName || 'User'}
         </span>
 
         {/* Dropdown Arrow */}
@@ -90,11 +74,11 @@ export default function UserProfileBadge() {
           <div className="px-4 py-3 border-b border-slate-800">
             <div className="flex items-center gap-3 mb-2">
               <div className="flex items-center justify-center w-10 h-10 rounded-full bg-accent text-white text-base font-semibold">
-                {getInitials(user.name)}
+                {getInitials(user.fullName)}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-slate-100 font-semibold text-sm truncate">
-                  {user.name || 'User'}
+                  {user.fullName || 'User'}
                 </p>
                 <p className="text-slate-400 text-xs truncate flex items-center gap-1">
                   <Mail size={12} />
@@ -103,7 +87,6 @@ export default function UserProfileBadge() {
               </div>
             </div>
 
-            {/* User ID (for debugging mock auth) */}
             {user.id && (
               <p className="text-slate-500 text-xs mt-1">ID: {user.id}</p>
             )}
