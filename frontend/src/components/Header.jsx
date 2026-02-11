@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Zap, Briefcase, Menu, X, LogOut } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { mockLogout, getCurrentUser } from '../lib/auth';
+import { getCachedUser, getSession, logout } from '../lib/auth';
 import UserProfileBadge from './UserProfileBadge';
 
 export default function Header({
@@ -12,22 +12,43 @@ export default function Header({
   const [showMenu, setShowMenu] = useState(false);
   const navigate = useNavigate();
   const isAnyScraping = scrapingLinkedIn || scrapingNaukri;
-
-  // TEMPORARY: Get mock user data to check if authenticated
-  // TODO: Replace with proper auth state management when backend is ready
-  const user = getCurrentUser();
+  const [user, setUser] = useState(() => getCachedUser());
   const isAuthenticated = !!user;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadUser = async () => {
+      try {
+        const sessionUser = await getSession();
+        if (isMounted) setUser(sessionUser);
+      } catch (error) {
+        if (isMounted) setUser(null);
+      }
+    };
+
+    loadUser();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleScrape = async source => {
     await onScrape(source);
     setShowMenu(false);
   };
 
-  const handleLogout = () => {
-    // TEMPORARY: Mock logout - clear localStorage and redirect
-    mockLogout();
-    navigate('/', { replace: true });
-    setShowMenu(false);
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    } finally {
+      setUser(null);
+      navigate('/', { replace: true });
+      setShowMenu(false);
+    }
   };
 
   return (
@@ -80,7 +101,9 @@ export default function Header({
           </button>
 
           {/* User Profile Badge - Only show when authenticated */}
-          {isAuthenticated && <UserProfileBadge />}
+          {isAuthenticated && (
+            <UserProfileBadge user={user} onLogout={handleLogout} />
+          )}
         </nav>
 
         {/* Mobile Menu Button */}
@@ -103,11 +126,13 @@ export default function Header({
               <div className="px-4 py-3 bg-slate-900 border border-slate-800 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center justify-center w-10 h-10 rounded-full bg-accent text-white text-sm font-semibold">
-                    {user.name ? user.name.substring(0, 2).toUpperCase() : 'U'}
+                    {user.fullName
+                      ? user.fullName.substring(0, 2).toUpperCase()
+                      : 'U'}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-slate-100 font-semibold text-sm truncate">
-                      {user.name || 'User'}
+                      {user.fullName || 'User'}
                     </p>
                     <p className="text-slate-400 text-xs truncate">
                       {user.email}

@@ -3,7 +3,7 @@ import app from './src/app.js';
 import connectDB from './src/config/database.js';
 
 // Load backend-local env file when running from backend/
-config({ path: '../.env' });
+config({ path: '.env' });
 const PORT = process.env.PORT || 5000;
 
 // Connect to database
