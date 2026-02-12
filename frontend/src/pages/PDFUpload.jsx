@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { Upload, FileText, CheckCircle2, AlertCircle } from 'lucide-react'; // Optional: for the calm icon vibe
+import { Upload, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function PDFUploader() {
   const [file, setFile] = useState(null);
