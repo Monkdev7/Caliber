@@ -37,4 +37,5 @@ logs/
 next-app/.next
 .github/
 
-/backened/uploads
+# ignore uploads
+**/uploads/
