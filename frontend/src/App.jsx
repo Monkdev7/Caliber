@@ -8,6 +8,7 @@ import AuthForgotPassword from './pages/AuthForgotPassword';
 import AuthResetPassword from './pages/AuthResetPassword';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
+import PDFUpload from './pages/PDFUpload';
 
 function App() {
   return (
@@ -22,6 +23,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/upload"
+          element={
+            <ProtectedRoute>
+              <PDFUpload />
             </ProtectedRoute>
           }
         />

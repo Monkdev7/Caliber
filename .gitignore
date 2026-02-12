@@ -36,3 +36,5 @@ logs/
 
 next-app/.next
 .github/
+
+/backened/uploads

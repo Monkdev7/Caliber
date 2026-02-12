@@ -63,27 +63,28 @@ function Homepage() {
               >
                 Explore Jobs →
               </Link>
-              <button className="px-8 py-4 bg-slate-900 text-slate-300 border border-slate-800 rounded-lg hover:bg-slate-800 transition-all font-semibold text-lg shadow-md">
-                Watch Demo
-              </button>
+              <Link
+                to="/upload"
+                className="px-8 py-4 bg-slate-900 text-slate-300 border border-slate-800 rounded-lg hover:bg-slate-800 transition-all font-semibold text-lg shadow-md text-center"
+              >
+                Upload Resume ↑
+              </Link>
             </div>
 
             {/* Stats */}
             <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
               <div className="bg-slate-900 border border-slate-800 p-6 rounded-lg shadow-md">
-                <div className="text-4xl font-bold text-accent mb-2">
-                  50K+
-                </div>
+                <div className="text-4xl font-bold text-accent mb-2">50K+</div>
                 <div className="text-slate-400 font-medium">Jobs Scraped</div>
               </div>
               <div className="bg-slate-900 border border-slate-800 p-6 rounded-lg shadow-md">
                 <div className="text-4xl font-bold text-accent mb-2">2</div>
-                <div className="text-slate-400 font-medium">Major Platforms</div>
+                <div className="text-slate-400 font-medium">
+                  Major Platforms
+                </div>
               </div>
               <div className="bg-slate-900 border border-slate-800 p-6 rounded-lg shadow-md">
-                <div className="text-4xl font-bold text-accent mb-2">
-                  24/7
-                </div>
+                <div className="text-4xl font-bold text-accent mb-2">24/7</div>
                 <div className="text-slate-400 font-medium">Auto Updates</div>
               </div>
             </div>
@@ -268,7 +269,9 @@ function Homepage() {
             <div>
               <div className="flex items-center space-x-2 mb-4">
                 <Briefcase className="h-6 w-6 text-accent" />
-                <span className="text-xl font-bold text-slate-100">Caliber</span>
+                <span className="text-xl font-bold text-slate-100">
+                  Caliber
+                </span>
               </div>
               <p className="text-slate-500 text-sm">
                 A modern full-stack job scraping application that aggregates
