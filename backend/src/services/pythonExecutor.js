@@ -77,6 +77,18 @@ class PythonExecutor {
 
     return runPython(scriptPath, [keyword, location]);
   }
+
+  /**
+   * Run Unstop scraper
+   */
+  async scrapeUnstop(keyword, location, maxPages = 1) {
+    const scriptPath = join(this.scriptsDir, 'unstop.py');
+    console.log(
+      `🚀 Running Unstop scraper using uv (Target: ${keyword} in ${location})…`,
+    );
+
+    return runPython(scriptPath, [keyword, location, maxPages.toString()]);
+  }
 }
 
 export default new PythonExecutor();
