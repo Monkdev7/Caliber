@@ -36,7 +36,6 @@ def setup_driver():
 
     # 2. Fallback for Windows/Other users (Chrome)
     else:
-        from selenium.webdriver.chrome.service import Service as ChromeService
         from selenium.webdriver.chrome.options import Options as ChromeOptions
 
         sys.stderr.write("Environment mismatch. Launching default Chrome...\n")
