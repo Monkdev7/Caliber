@@ -180,17 +180,19 @@ const createJobLookup = jobs => {
 };
 
 const normalizeJob = (job, userProfile) => {
-  const title = job?.title || 'Untitled role';
+  const title = job?.job_title || job?.title || 'Untitled role';
   const description = job?.description || '';
+  const company = job?.company_name || job?.company || 'Unknown company';
+  const jobId = job?.job_id || job?._id;
   const location = job?.location || '';
   const { city, country } = splitLocation(location);
 
   return {
-    job_id: String(job?.jobId || job?._id),
-    canonical_job_id: String(job?._id || job?.jobId),
+    job_id: String(jobId),
+    canonical_job_id: String(jobId),
     title,
     role_family: inferRoleFamily(title, description),
-    company: job?.company || 'Unknown company',
+    company,
     location_city: city,
     location_country: country,
     remote_type: inferRemoteType(location, description),

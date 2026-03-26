@@ -77,6 +77,7 @@ def scrape_linkedin_jobs(keyword: str, location: str, max_pages: int = 1):
                 "company_name": None,
                 "job_title": None,
                 "num_applicants": None,
+                "description": None,
                 "job_id": job_id,
                 "job_link": f"https://www.linkedin.com/jobs/view/{job_id}",
             }
@@ -96,6 +97,10 @@ def scrape_linkedin_jobs(keyword: str, location: str, max_pages: int = 1):
             applicants_element = job_soup.select_one(
                 "figcaption.num-applicants__caption"
             ) or job_soup.select_one("span.num-applicants__caption")
+
+            desc_el = job_soup.select_one(".show-more-less-html__markup")
+            if desc_el:
+                job_post["description"] = desc_el.get_text(separator="\n", strip=True)
 
             if applicants_element:
                 applicants_text = applicants_element.get_text(strip=True)
