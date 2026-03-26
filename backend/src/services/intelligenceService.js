@@ -1,10 +1,12 @@
 import { spawn } from 'child_process';
 import { dirname, join, resolve } from 'path';
 import { fileURLToPath } from 'url';
+import { config } from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+config({ path: join(__dirname, '../../../.env') });
 const projectRoot = join(__dirname, '../../..');
 const intelligenceDir = join(projectRoot, 'caliber_intelligence');
 const bridgePath = join(intelligenceDir, 'bridge.py');
@@ -21,7 +23,8 @@ const inferRemoteType = (location, description) => {
   const text = normalizeText(`${location} ${description}`);
 
   if (text.includes('hybrid')) return 'hybrid';
-  if (text.includes('remote') || text.includes('work from home')) return 'remote';
+  if (text.includes('remote') || text.includes('work from home'))
+    return 'remote';
   if (
     text.includes('onsite') ||
     text.includes('on-site') ||
@@ -52,7 +55,11 @@ const inferSeniority = (title, description) => {
   if (text.includes('intern')) return 'internship';
   if (text.includes('entry') || text.includes('fresher')) return 'entry';
   if (text.includes('junior') || text.includes('associate')) return 'junior';
-  if (text.includes('senior') || text.includes('lead') || text.includes('staff'))
+  if (
+    text.includes('senior') ||
+    text.includes('lead') ||
+    text.includes('staff')
+  )
     return 'senior';
   if (/\bmid\b/.test(text) || /\bii\b/.test(text) || /\blevel 2\b/.test(text))
     return 'mid';
@@ -135,7 +142,9 @@ const extractMatchedSkills = (title, description, userSkills = []) => {
   const text = normalizeText(`${title} ${description}`);
 
   return userSkills.filter(skill => {
-    const pattern = new RegExp(`(^|[^a-z0-9+#])${escapeRegex(skill.toLowerCase())}([^a-z0-9+#]|$)`);
+    const pattern = new RegExp(
+      `(^|[^a-z0-9+#])${escapeRegex(skill.toLowerCase())}([^a-z0-9+#]|$)`,
+    );
     return pattern.test(text);
   });
 };
@@ -252,7 +261,9 @@ const runBridge = (action, payload) =>
       }
 
       rejectPromise(
-        new Error(`Failed to start Caliber Intelligence bridge: ${error.message}`),
+        new Error(
+          `Failed to start Caliber Intelligence bridge: ${error.message}`,
+        ),
       );
     });
 
@@ -284,12 +295,7 @@ const runBridge = (action, payload) =>
   });
 
 class IntelligenceService {
-  async analyzeResumeAndRecommend({
-    filePath,
-    userId,
-    jobs = [],
-    topK = 10,
-  }) {
+  async analyzeResumeAndRecommend({ filePath, userId, jobs = [], topK = 10 }) {
     const parsedResume = await runBridge('analyze_resume', {
       file_path: resolve(filePath),
       user_id: userId || 'anonymous',
