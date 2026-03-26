@@ -1,0 +1,11 @@
+{
+  "Frontend Developer": "Frontend",
+  "Backend Developer": "Backend",
+  "Full Stack Developer": "Full Stack",
+  "Machine Learning Engineer": "Machine Learning / AI",
+  "Data Scientist": "Data",
+  "Data Analyst": "Data",
+  "DevOps Engineer": "DevOps / Cloud",
+  "Mobile Developer": "Mobile",
+  "Software Engineer": "Software Engineering"
+}

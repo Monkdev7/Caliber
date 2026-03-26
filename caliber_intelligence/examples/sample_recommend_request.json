@@ -1,0 +1,44 @@
+{
+  "user_profile": {
+    "user_id": "user_001",
+    "preferred_roles": ["Machine Learning Engineer", "Data Scientist"],
+    "preferred_role_families": ["Machine Learning / AI", "Data"],
+    "skills": ["Python", "PyTorch", "NLP", "SQL"],
+    "preferred_locations": ["Bengaluru", "Remote"],
+    "remote_preferences": ["remote", "hybrid"],
+    "employment_types": ["internship", "full_time"],
+    "seniority": "entry",
+    "resume_text": "Built NLP and CV projects in Python and PyTorch.",
+    "behavior_weights": {
+      "role_family_weights": {
+        "Machine Learning / AI": 0.5
+      },
+      "skill_weights": {
+        "Python": 0.4,
+        "PyTorch": 0.6
+      }
+    }
+  },
+  "jobs": [
+    {
+      "job_id": "job_001",
+      "title": "AI/ML Intern",
+      "role_family": "Machine Learning / AI",
+      "company": "Alpha Labs",
+      "location_city": "Bengaluru",
+      "location_country": "India",
+      "remote_type": "hybrid",
+      "employment_type": "internship",
+      "seniority": "internship",
+      "skills": ["Python", "PyTorch", "NLP"],
+      "description": "Work on NLP systems and ML pipelines.",
+      "posted_at": "2026-03-18T07:00:00Z",
+      "source": "linkedin",
+      "salary_min": null,
+      "salary_max": null,
+      "is_active": true,
+      "canonical_job_id": "canon_001"
+    }
+  ],
+  "top_k": 10
+}

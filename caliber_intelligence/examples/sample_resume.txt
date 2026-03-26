@@ -1,0 +1,14 @@
+JOHN DOE
+
+SUMMARY
+Computer Science undergraduate focused on machine learning and NLP.
+
+TECHNICAL SKILLS
+Python, PyTorch, TensorFlow, SQL, Git, Docker
+
+PROJECTS
+Built an NLP-based resume parser using Python and transformers.
+Created an image classification model using PyTorch and OpenCV.
+
+EDUCATION
+B.Tech in Computer Science and Engineering, 2027

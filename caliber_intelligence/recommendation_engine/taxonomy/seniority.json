@@ -1,0 +1,7 @@
+{
+  "internship": ["intern", "internship", "trainee"],
+  "entry": ["entry", "fresher", "graduate", "associate"],
+  "junior": ["junior", "jr"],
+  "mid": ["mid", "intermediate", "2+ years", "3+ years"],
+  "senior": ["senior", "lead", "staff", "principal", "5+ years"]
+}

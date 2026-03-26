@@ -1,0 +1,11 @@
+{
+  "Frontend Developer": ["frontend developer", "frontend engineer", "react developer", "ui developer"],
+  "Backend Developer": ["backend developer", "backend engineer", "api developer", "server-side developer"],
+  "Full Stack Developer": ["full stack developer", "fullstack developer", "full stack engineer"],
+  "Machine Learning Engineer": ["machine learning engineer", "ml engineer", "ai engineer", "machine learning developer"],
+  "Data Scientist": ["data scientist", "applied scientist"],
+  "Data Analyst": ["data analyst", "business analyst"],
+  "DevOps Engineer": ["devops engineer", "cloud engineer", "site reliability engineer", "sre"],
+  "Mobile Developer": ["android developer", "ios developer", "mobile developer"],
+  "Software Engineer": ["software engineer", "software developer", "sde"]
+}
