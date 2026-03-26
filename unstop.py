@@ -1,5 +1,6 @@
 import json
 import sys
+from bs4 import BeautifulSoup
 import requests
 import time
 from urllib.parse import quote
@@ -57,6 +58,12 @@ def scrape_unstop_jobs(keyword: str, location: str, max_pages: int = 1):
                     # Fallback to the top-level region (e.g., "online")
                     location_str = data.get("region", "Remote").capitalize()
 
+                raw_description = data.get("details") or ""
+                clean_description = ""
+                if raw_description:
+                    soup = BeautifulSoup(raw_description, "lxml")
+                    clean_description = soup.get_text(separator="\n", strip=True)
+
                 # Extract salary details
                 job_detail = data.get("jobDetail", {})
                 if job_detail.get("show_salary") == 1:
@@ -75,6 +82,7 @@ def scrape_unstop_jobs(keyword: str, location: str, max_pages: int = 1):
                     "num_applicants": data.get("registerCount"),
                     "job_link": data.get("seo_url"),
                     "job_location": location_str,
+                    "description": clean_description,
                     "salary": salary_str,
                 }
                 job_list.append(extracted)
