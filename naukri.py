@@ -84,6 +84,11 @@ def scrape_job_details(job_url, driver):
         job_id_match.group(1) if job_id_match else job_url.split("-")[-1].split("?")[0]
     )
 
+    description_el = soup.select_one("div.styles_JDC__dang-inner-html__h0K4t")
+    description_text = ""
+    if description_el:
+        description_text = description_el.get_text(separator="\n", strip=True)
+
     time_posted = "Recently"
     num_applicants = 0
 
@@ -117,6 +122,7 @@ def scrape_job_details(job_url, driver):
         ),
         "time_posted": time_posted,
         "num_applicants": num_applicants,
+        "description": description_text,
         "job_link": job_url,
         "job_location": (
             soup.select_one(
