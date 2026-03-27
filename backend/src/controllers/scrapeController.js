@@ -121,41 +121,27 @@ class ScrapeController {
   async scrapeAll(req, res, next) {
     try {
       const { keyword, location, maxPages = 1 } = req.body;
-      if (!keyword || !location) {
-        return res
-          .status(400)
-          .json({ success: false, error: 'Missing parameters' });
-      }
+      const sources = ['linkedin', 'naukri', 'unstop', 'foundit'];
 
-      console.log(`🚀 Multi-source scrape started: ${keyword} @ ${location}`);
+      console.log(`🚀 Multi-source scrape: ${keyword} @ ${location}`);
 
-      // All three running at once
-      const results = await Promise.allSettled([
-        this._handleScrapeAndSave('linkedin', keyword, location, maxPages),
-        this._handleScrapeAndSave('naukri', keyword, location),
-        this._handleScrapeAndSave('unstop', keyword, location, maxPages),
-        this._handleScrapeAndSave('foundit', keyword, location, maxPages),
-      ]);
+      const results = await Promise.allSettled(
+        sources.map(src =>
+          this._handleScrapeAndSave(src, keyword, location, maxPages),
+        ),
+      );
 
-      const responseData = {
-        linkedin:
-          results[0].status === 'fulfilled'
-            ? results[0].value
-            : { error: results[0].reason?.message || results[0].reason },
-        naukri:
-          results[1].status === 'fulfilled'
-            ? results[1].value
-            : { error: results[1].reason?.message || results[1].reason },
-        unstop:
-          results[2].status === 'fulfilled'
-            ? results[2].value
-            : { error: results[2].reason?.message || results[2].reason },
-      };
-
-      res.status(200).json({
-        success: true,
-        data: responseData,
+      // Dynamic
+      const responseData = {};
+      sources.forEach((source, index) => {
+        const res = results[index];
+        responseData[source] =
+          res.status === 'fulfilled'
+            ? res.value
+            : { error: res.reason?.message || res.reason };
       });
+
+      res.status(200).json({ success: true, data: responseData });
     } catch (error) {
       next(error);
     }
