@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Zap, Briefcase, Menu, X, LogOut } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Zap, Briefcase, Menu, X, LogOut, LayoutDashboard } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { getCachedUser, getSession, logout } from '../lib/auth';
 import UserProfileBadge from './UserProfileBadge';
 
@@ -8,16 +8,22 @@ export default function Header({
   onScrape,
   scrapingLinkedIn = false,
   scrapingNaukri = false,
+  scrapingUnstop = false,
+  scrapingFoundit = false,
+  showScrapers = true,
 }) {
   const [showMenu, setShowMenu] = useState(false);
   const navigate = useNavigate();
-  const isAnyScraping = scrapingLinkedIn || scrapingNaukri;
+  const location = useLocation();
+
   const [user, setUser] = useState(() => getCachedUser());
   const isAuthenticated = !!user;
 
+  const isAnyScraping =
+    scrapingLinkedIn || scrapingNaukri || scrapingUnstop || scrapingFoundit;
+
   useEffect(() => {
     let isMounted = true;
-
     const loadUser = async () => {
       try {
         const sessionUser = await getSession();
@@ -26,18 +32,11 @@ export default function Header({
         if (isMounted) setUser(null);
       }
     };
-
     loadUser();
-
     return () => {
       isMounted = false;
     };
   }, []);
-
-  const handleScrape = async source => {
-    await onScrape(source);
-    setShowMenu(false);
-  };
 
   const handleLogout = async () => {
     try {
@@ -50,6 +49,9 @@ export default function Header({
       setShowMenu(false);
     }
   };
+
+  const navLinkClass =
+    'text-slate-400 hover:text-slate-100 font-medium transition-colors';
 
   return (
     <header className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
@@ -68,50 +70,94 @@ export default function Header({
         </Link>
 
         {/* Desktop Menu */}
-        <nav className="hidden sm:flex items-center gap-3">
-          <button
-            onClick={() => handleScrape('linkedin')}
-            disabled={isAnyScraping}
-            className="auth-button flex items-center justify-center gap-2 px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-            title={
-              scrapingLinkedIn
-                ? 'Scraping LinkedIn...'
-                : isAnyScraping
-                  ? 'Another scrape in progress'
-                  : 'Scrape LinkedIn jobs'
-            }
-          >
-            <Zap size={18} className={scrapingLinkedIn ? 'animate-spin' : ''} />
-            <span>{scrapingLinkedIn ? 'Scraping...' : 'Scrape LinkedIn'}</span>
-          </button>
-          <button
-            onClick={() => handleScrape('naukri')}
-            disabled={isAnyScraping}
-            className="auth-button flex items-center justify-center gap-2 px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-            title={
-              scrapingNaukri
-                ? 'Scraping Naukri...'
-                : isAnyScraping
-                  ? 'Another scrape in progress'
-                  : 'Scrape Naukri jobs'
-            }
-          >
-            <Zap size={18} className={scrapingNaukri ? 'animate-spin' : ''} />
-            <span>{scrapingNaukri ? 'Scraping...' : 'Scrape Naukri'}</span>
-          </button>
+        <nav className="hidden sm:flex items-center gap-4">
+          {/* 1. Dashboard Link (Shown if logged in and NOT already on dashboard) */}
+          {isAuthenticated && location.pathname !== '/dashboard' && (
+            <Link
+              to="/dashboard"
+              className={`flex items-center gap-2 ${navLinkClass}`}
+            >
+              <LayoutDashboard size={18} />
+              <span>Dashboard</span>
+            </Link>
+          )}
 
-          {/* User Profile Badge - Only show when authenticated */}
-          {isAuthenticated && (
+          {/* 2. Scrape Buttons (Only shown if showScrapers is true) */}
+          {showScrapers && (
+            <div className="flex items-center gap-2 border-r border-slate-800 pr-4 mr-2">
+              {/* Foundit button */}
+              <button
+                onClick={() => onScrape('linkedin')}
+                disabled={isAnyScraping}
+                className="auth-button px-4 py-2 text-sm flex items-center gap-2 disabled:opacity-50"
+              >
+                <Zap
+                  size={14}
+                  className={scrapingLinkedIn ? 'animate-spin' : ''}
+                />
+                LinkedIn
+              </button>
+              {/* Naukri button */}
+              <button
+                onClick={() => onScrape('naukri')}
+                disabled={isAnyScraping}
+                className="auth-button px-4 py-2 text-sm flex items-center gap-2 disabled:opacity-50"
+              >
+                <Zap
+                  size={14}
+                  className={scrapingNaukri ? 'animate-spin' : ''}
+                />
+                Naukri
+              </button>
+              {/* Unstop button */}
+              <button
+                onClick={() => onScrape('unstop')}
+                disabled={isAnyScraping}
+                className="auth-button px-4 py-2 text-sm flex items-center gap-2 disabled:opacity-50"
+              >
+                <Zap
+                  size={14}
+                  className={scrapingNaukri ? 'animate-spin' : ''}
+                />
+                Unstop
+              </button>
+              {/* Foundit button */}
+              <button
+                onClick={() => onScrape('foundit')}
+                disabled={isAnyScraping}
+                className="auth-button px-4 py-2 text-sm flex items-center gap-2 disabled:opacity-50"
+              >
+                <Zap
+                  size={14}
+                  className={scrapingFoundit ? 'animate-spin' : ''}
+                />
+                Foundit
+              </button>
+            </div>
+          )}
+
+          {/* 3. Auth Section */}
+          {!isAuthenticated ? (
+            <div className="flex items-center gap-4">
+              <Link to="/login" className={navLinkClass}>
+                Login
+              </Link>
+              <Link
+                to="/signup"
+                className="px-6 py-2 bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors font-medium"
+              >
+                Sign Up
+              </Link>
+            </div>
+          ) : (
             <UserProfileBadge user={user} onLogout={handleLogout} />
           )}
         </nav>
 
-        {/* Mobile Menu Button */}
+        {/* Mobile Toggle */}
         <button
-          className="sm:hidden p-2 text-slate-400 hover:text-slate-100"
+          className="sm:hidden p-2 text-slate-400"
           onClick={() => setShowMenu(!showMenu)}
-          type="button"
-          aria-label="Toggle menu"
         >
           {showMenu ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -119,66 +165,78 @@ export default function Header({
 
       {/* Mobile Menu */}
       {showMenu && (
-        <div className="sm:hidden border-t border-slate-800 bg-slate-950">
-          <div className="px-4 py-4 space-y-3">
-            {/* User Info in Mobile Menu */}
-            {isAuthenticated && user && (
-              <div className="px-4 py-3 bg-slate-900 border border-slate-800 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-accent text-white text-sm font-semibold">
-                    {user.fullName
-                      ? user.fullName.substring(0, 2).toUpperCase()
-                      : 'U'}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-slate-100 font-semibold text-sm truncate">
-                      {user.fullName || 'User'}
-                    </p>
-                    <p className="text-slate-400 text-xs truncate">
-                      {user.email}
-                    </p>
-                  </div>
-                </div>
+        <div className="sm:hidden border-t border-slate-800 bg-slate-950 p-4 space-y-4">
+          {isAuthenticated && (
+            <div className="flex items-center gap-3 p-3 bg-slate-900 rounded-lg">
+              <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-white font-bold">
+                {user.fullName?.[0] || 'U'}
               </div>
+              <div className="overflow-hidden">
+                <p className="text-slate-100 font-semibold truncate">
+                  {user.fullName}
+                </p>
+                <p className="text-slate-400 text-xs truncate">{user.email}</p>
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-2">
+            {isAuthenticated && (
+              <Link
+                to="/dashboard"
+                className="w-full p-3 bg-slate-900 text-slate-100 rounded-lg text-center"
+                onClick={() => setShowMenu(false)}
+              >
+                Go to Dashboard
+              </Link>
             )}
 
-            <button
-              onClick={() => handleScrape('linkedin')}
-              disabled={isAnyScraping}
-              className="w-full auth-button flex items-center justify-center gap-2 px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-              type="button"
-            >
-              <Zap
-                size={18}
-                className={scrapingLinkedIn ? 'animate-spin' : ''}
-              />
-              <span>
-                {scrapingLinkedIn ? 'Scraping...' : 'Scrape LinkedIn'}
-              </span>
-            </button>
-            <button
-              onClick={() => handleScrape('naukri')}
-              disabled={isAnyScraping}
-              className="w-full auth-button flex items-center justify-center gap-2 px-6 py-3 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-              type="button"
-            >
-              <Zap size={18} className={scrapingNaukri ? 'animate-spin' : ''} />
-              <span>{scrapingNaukri ? 'Scraping...' : 'Scrape Naukri'}</span>
-            </button>
-            <Link
-              to="/"
-              className="w-full px-6 py-3 bg-slate-900 border border-slate-800 text-slate-300 rounded-lg hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
-              onClick={() => setShowMenu(false)}
-            >
-              Back to Home
-            </Link>
-            {isAuthenticated && (
+            {showScrapers && (
+              <>
+                <button
+                  onClick={() => {
+                    onScrape('linkedin');
+                    setShowMenu(false);
+                  }}
+                  className="w-full p-3 bg-accent text-white rounded-lg"
+                >
+                  Scrape LinkedIn
+                </button>
+                <button
+                  onClick={() => {
+                    onScrape('naukri');
+                    setShowMenu(false);
+                  }}
+                  className="w-full p-3 bg-accent text-white rounded-lg"
+                >
+                  Scrape Naukri
+                </button>
+              </>
+            )}
+
+            {!isAuthenticated ? (
+              <>
+                <Link
+                  to="/login"
+                  className="w-full p-3 text-center text-slate-100"
+                  onClick={() => setShowMenu(false)}
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/signup"
+                  className="w-full p-3 bg-accent text-white rounded-lg text-center"
+                  onClick={() => setShowMenu(false)}
+                >
+                  Sign Up
+                </Link>
+              </>
+            ) : (
               <button
                 onClick={handleLogout}
-                className="w-full px-6 py-3 bg-slate-900 border border-slate-800 text-slate-300 rounded-lg hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+                className="w-full p-3 bg-red-500/10 text-red-500 rounded-lg flex items-center justify-center gap-2"
               >
-                <LogOut size={18} />
-                <span>Logout</span>
+                <LogOut size={18} /> Logout
               </button>
             )}
           </div>
