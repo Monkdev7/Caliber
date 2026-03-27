@@ -55,7 +55,7 @@ def get_job_data_from_page(driver, url=None):
     results = []
     for card in job_cards:
         try:
-            # --- 1. Title & Link ---
+            # 1. Title & Link
             title_tag = card.select_one("[data-test='job-title']")
             if not title_tag:
                 continue
@@ -71,7 +71,7 @@ def get_job_data_from_page(driver, url=None):
                     else raw_href
                 )
 
-            # --- 2. Job ID ---
+            # 2. Job ID
             raw_id_attr = title_tag.get("id")
             job_id = "gd_unknown"
             if isinstance(raw_id_attr, str):
@@ -79,15 +79,15 @@ def get_job_data_from_page(driver, url=None):
                 id_match = re.search(r"(\d+)", raw_id_attr)
                 job_id = f"gd_{id_match.group(1)}" if id_match else "gd_unknown"
 
-            # --- 3. Company ---
+            # 3. Company
             company_tag = card.select_one(".EmployerProfile_compactEmployerName__9MGcV")
             company = company_tag.get_text(strip=True) if company_tag else "N/A"
 
-            # --- 4. Location ---
+            # 4. Location
             loc_tag = card.select_one("[data-test='emp-location']")
             location = loc_tag.get_text(strip=True) if loc_tag else "India"
 
-            # --- 5. Salary ---
+            # 5. Salary
             salary_tag = card.select_one("[data-test='detailSalary']")
             salary = (
                 salary_tag.get_text(strip=True).replace("\xa0", " ")
@@ -138,7 +138,7 @@ def scrape_glassdoor(keyword, location, max_pages=1):
         time.sleep(1)
         loc_input.send_keys(Keys.ENTER)
 
-        # Wait for results to load
+        # Wait
         WebDriverWait(driver, 15).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "[data-test='job-title']"))
         )
