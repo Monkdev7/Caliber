@@ -59,6 +59,8 @@ function Dashboard() {
     const [loading, setLoading] = useState(false);
     const [scrapingLinkedIn, setScrapingLinkedIn] = useState(false);
     const [scrapingNaukri, setScrapingNaukri] = useState(false);
+    const [scrapingUnstop, setScrapingUnstop] = useState(false);
+    const [scrapingFoundit, setScrapingFoundit] = useState(false);
     const [scrapingFromSearch, setScrapingFromSearch] = useState(false);
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(null);
@@ -148,7 +150,7 @@ function Dashboard() {
 
             console.log(`🔍 Triggering scrape for: "${keyword}"${location ? ` in "${location}"` : ' (all locations)'}`);
 
-            // Call the scrape all endpoint to scrape both sources
+            // Call the scrape all endpoint to scrape all configured sources
             const response = await axios.post('/api/scrape/all', {
                 keyword,
                 location: location || undefined, // Send undefined if no location to let backend handle it
@@ -170,9 +172,11 @@ function Dashboard() {
                 // Show success message
                 const linkedInCount = response.data.data?.linkedin?.saved || 0;
                 const naukriCount = response.data.data?.naukri?.saved || 0;
-                const totalCount = linkedInCount + naukriCount;
+                const unstopCount = response.data.data?.unstop?.saved || 0;
+                const founditCount = response.data.data?.foundit?.saved || 0;
+                const totalCount = linkedInCount + naukriCount + unstopCount + founditCount;
 
-                setSuccess(`Successfully scraped ${totalCount} jobs (LinkedIn: ${linkedInCount}, Naukri: ${naukriCount})`);
+                setSuccess(`Successfully scraped ${totalCount} jobs (LinkedIn: ${linkedInCount}, Naukri: ${naukriCount}, Unstop: ${unstopCount}, Foundit: ${founditCount})`);
             } else {
                 setError('Scraping failed — please try again.');
             }
@@ -187,11 +191,10 @@ function Dashboard() {
     const triggerScrape = async source => {
         try {
             // Set scraping state for specific source only
-            if (source === 'linkedin') {
-                setScrapingLinkedIn(true);
-            } else if (source === 'naukri') {
-                setScrapingNaukri(true);
-            }
+            if (source === 'linkedin') setScrapingLinkedIn(true);
+            else if (source === 'naukri') setScrapingNaukri(true);
+            else if (source === 'unstop') setScrapingUnstop(true);
+            else if (source === 'foundit') setScrapingFoundit(true);
 
             setError(null);
             setSuccess(null);
@@ -200,19 +203,16 @@ function Dashboard() {
             const keyword = searchTerm || 'Software Engineer';
             const location = 'Remote';
 
-            let response;
-
-            if (source === 'linkedin') {
-                response = await axios.post(`/api/scrape/linkedin`, {
-                    keyword,
-                    location,
-                });
-            } else if (source === 'naukri') {
-                response = await axios.post(`/api/scrape/naukri`, {
-                    keyword,
-                    location,
-                });
+            const supportedSources = ['linkedin', 'naukri', 'unstop', 'foundit'];
+            if (!supportedSources.includes(source)) {
+                throw new Error(`Unsupported source: ${source}`);
             }
+
+            const response = await axios.post(`/api/scrape/${source}`, {
+                keyword,
+                location,
+                maxPages: 1,
+            });
 
             if (response.data.success) {
                 // Clear all filters and search
@@ -238,11 +238,10 @@ function Dashboard() {
             console.error(err);
         } finally {
             // Clear scraping state for specific source
-            if (source === 'linkedin') {
-                setScrapingLinkedIn(false);
-            } else if (source === 'naukri') {
-                setScrapingNaukri(false);
-            }
+            if (source === 'linkedin') setScrapingLinkedIn(false);
+            else if (source === 'naukri') setScrapingNaukri(false);
+            else if (source === 'unstop') setScrapingUnstop(false);
+            else if (source === 'foundit') setScrapingFoundit(false);
         }
     };
 
@@ -375,7 +374,7 @@ function Dashboard() {
         setSuccess(`Exported ${filteredJobs.length} jobs to CSV!`);
     };
 
-    const isAnyScraping = scrapingLinkedIn || scrapingNaukri || scrapingFromSearch;
+    const isAnyScraping = scrapingLinkedIn || scrapingNaukri || scrapingUnstop || scrapingFoundit || scrapingFromSearch;
 
     return (
         <div className="min-h-screen bg-slate-950 flex flex-col">
@@ -383,6 +382,8 @@ function Dashboard() {
                 onScrape={triggerScrape}
                 scrapingLinkedIn={scrapingLinkedIn}
                 scrapingNaukri={scrapingNaukri}
+                scrapingUnstop={scrapingUnstop}
+                scrapingFoundit={scrapingFoundit}
             />
 
             {/* Main Content */}
@@ -613,9 +614,11 @@ function Dashboard() {
                         <div className="flex items-center justify-center gap-3">
                             <Zap className="animate-spin text-accent" size={24} />
                             <span className="text-slate-300 font-medium">
-                                {scrapingFromSearch && 'Fetching latest jobs from LinkedIn & Naukri...'}
+                                {scrapingFromSearch && 'Fetching latest jobs from LinkedIn, Naukri, Unstop, and Foundit...'}
                                 {scrapingLinkedIn && 'Scraping LinkedIn jobs...'}
                                 {scrapingNaukri && 'Scraping Naukri jobs...'}
+                                {scrapingUnstop && 'Scraping Unstop jobs...'}
+                                {scrapingFoundit && 'Scraping Foundit jobs...'}
                                 {' This may take a moment.'}
                             </span>
                         </div>
@@ -637,9 +640,9 @@ function Dashboard() {
                         <Briefcase className="mx-auto text-slate-700 mb-4" size={64} />
                         <h3 className="text-xl font-semibold text-slate-100 mb-2">No Jobs Found</h3>
                         <p className="text-slate-400 mb-6">
-                            Get started by scraping jobs from LinkedIn or Naukri
+                            Get started by scraping jobs from LinkedIn, Naukri, Unstop, or Foundit
                         </p>
-                        <div className="flex justify-center gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
                             <button
                                 onClick={() => triggerScrape('linkedin')}
                                 disabled={isAnyScraping}
@@ -655,6 +658,22 @@ function Dashboard() {
                             >
                                 <Zap size={18} className={scrapingNaukri ? 'animate-spin' : ''} />
                                 {scrapingNaukri ? 'Scraping...' : 'Scrape Naukri'}
+                            </button>
+                            <button
+                                onClick={() => triggerScrape('unstop')}
+                                disabled={isAnyScraping}
+                                className="auth-button flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <Zap size={18} className={scrapingUnstop ? 'animate-spin' : ''} />
+                                {scrapingUnstop ? 'Scraping...' : 'Scrape Unstop'}
+                            </button>
+                            <button
+                                onClick={() => triggerScrape('foundit')}
+                                disabled={isAnyScraping}
+                                className="auth-button flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <Zap size={18} className={scrapingFoundit ? 'animate-spin' : ''} />
+                                {scrapingFoundit ? 'Scraping...' : 'Scrape Foundit'}
                             </button>
                         </div>
                     </div>

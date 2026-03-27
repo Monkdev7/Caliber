@@ -117,7 +117,7 @@ export default function Header({
               >
                 <Zap
                   size={14}
-                  className={scrapingNaukri ? 'animate-spin' : ''}
+                  className={scrapingUnstop ? 'animate-spin' : ''}
                 />
                 Unstop
               </button>
@@ -210,6 +210,24 @@ export default function Header({
                   className="w-full p-3 bg-accent text-white rounded-lg"
                 >
                   Scrape Naukri
+                </button>
+                <button
+                  onClick={() => {
+                    onScrape('unstop');
+                    setShowMenu(false);
+                  }}
+                  className="w-full p-3 bg-accent text-white rounded-lg"
+                >
+                  Scrape Unstop
+                </button>
+                <button
+                  onClick={() => {
+                    onScrape('foundit');
+                    setShowMenu(false);
+                  }}
+                  className="w-full p-3 bg-accent text-white rounded-lg"
+                >
+                  Scrape Foundit
                 </button>
               </>
             )}
