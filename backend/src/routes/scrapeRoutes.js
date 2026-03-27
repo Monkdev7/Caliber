@@ -14,6 +14,9 @@ router.post('/naukri', scrapeController.scrapeNaukri.bind(scrapeController));
 // POST /api/scrape/unstop - Scrape Unstop
 router.post('/unstop', scrapeController.scrapeUnstop.bind(scrapeController));
 
+// POST /api/scrape/foundit - Scrape Foundit
+router.post('/foundit', scrapeController.scrapeFoundit.bind(scrapeController));
+
 // POST /api/scrape/all - Scrape all sources
 router.post('/all', scrapeController.scrapeAll.bind(scrapeController));
 

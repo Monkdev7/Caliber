@@ -89,6 +89,18 @@ class PythonExecutor {
 
     return runPython(scriptPath, [keyword, location, maxPages.toString()]);
   }
+
+  /**
+   * Run FoundIt scraper
+   */
+  async scrapeFoundit(keyword, location, maxPages = 1) {
+    const scriptPath = join(this.scriptsDir, 'foundit.py');
+    console.log(
+      `🚀 Running Foundit scraper using uv (Target: ${keyword} in ${location})…`,
+    );
+
+    return runPython(scriptPath, [keyword, location, maxPages.toString()]);
+  }
 }
 
 export default new PythonExecutor();

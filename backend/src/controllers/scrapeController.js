@@ -11,11 +11,12 @@ class ScrapeController {
       jobs = await pythonExecutor.scrapeNaukri(keyword, location);
     } else if (source === 'unstop') {
       jobs = await pythonExecutor.scrapeUnstop(keyword, location, maxPages);
+    } else if (source === 'foundit') {
+      jobs = await pythonExecutor.scrapeFoundit(keyword, location, maxPages);
     } else {
       throw new Error(`Unsupported source: ${source}`);
     }
 
-    // 2. Save and return results
     return await jobService.saveJobs(jobs, source);
   }
 
@@ -90,6 +91,30 @@ class ScrapeController {
     }
   }
 
+  async scrapeFoundit(req, res, next) {
+    try {
+      const { keyword, location, maxPages = 1 } = req.body;
+      if (!keyword || !location)
+        throw new Error('Keyword and location are required');
+
+      console.log(`🔍 Starting Foundit scrape: ${keyword} in ${location}`);
+      const saveResults = await this._handleScrapeAndSave(
+        'foundit',
+        keyword,
+        location,
+        maxPages,
+      );
+
+      res.status(200).json({
+        success: true,
+        message: 'Foundit sync complete',
+        data: saveResults,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   /**
    * Scrape from all sources IN PARALLEL
    */
@@ -109,6 +134,7 @@ class ScrapeController {
         this._handleScrapeAndSave('linkedin', keyword, location, maxPages),
         this._handleScrapeAndSave('naukri', keyword, location),
         this._handleScrapeAndSave('unstop', keyword, location, maxPages),
+        this._handleScrapeAndSave('foundit', keyword, location, maxPages),
       ]);
 
       const responseData = {
