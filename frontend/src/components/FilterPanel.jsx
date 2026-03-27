@@ -34,6 +34,8 @@ export default function FilterPanel({ filters, onFilterChange }) {
                         <option value="all">All Sources</option>
                         <option value="linkedin">LinkedIn</option>
                         <option value="naukri">Naukri</option>
+                        <option value="unstop">Unstop</option>
+                        <option value="foundit">Foundit</option>
                     </select>
                 </div>
 
