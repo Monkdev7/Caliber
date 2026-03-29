@@ -118,11 +118,15 @@ function Dashboard() {
                 setJobs(jobs);
                 setPagination(pagination);
             } else {
-                setError('Invalid data structure received.');
+                setJobs([]);
+                setPagination({ page: 1, limit: 60, total: 0, pages: 0 });
             }
         } catch (err) {
-            setError('Failed to fetch jobs. Please try again later.');
-            console.error('Error fetching jobs:', err);
+            // For first-time users with no jobs yet (or transient API issues),
+            // keep the dashboard usable and show the empty state instead of a hard error.
+            setJobs([]);
+            setPagination({ page: 1, limit: 60, total: 0, pages: 0 });
+            console.warn('Jobs fetch failed, showing empty dashboard state:', err);
         } finally {
             setLoading(false);
         }

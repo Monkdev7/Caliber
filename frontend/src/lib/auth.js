@@ -107,6 +107,24 @@ export const logout = async () => {
     cachedUser = null;
 };
 
+export const requestPasswordReset = async email => {
+    return apiRequest('/api/auth/forgot-password', {
+        method: 'POST',
+        body: { email },
+        requireCsrf: true,
+    });
+};
+
+export const resetPassword = async (token, password) => {
+    await apiRequest('/api/auth/reset-password', {
+        method: 'POST',
+        body: { token, password },
+        requireCsrf: true,
+    });
+
+    cachedUser = null;
+};
+
 export const refreshSession = async () => {
     const data = await apiRequest('/api/auth/refresh', {
         method: 'POST',

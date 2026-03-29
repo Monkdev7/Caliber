@@ -31,8 +31,8 @@ function AuthLogin() {
             setAuthError('');
             await login(values.email, values.password);
 
-            // Redirect to dashboard after successful login
-            navigate('/dashboard', { replace: true });
+            // Redirect to home page after successful login
+            navigate('/', { replace: true });
         } catch (error) {
             setAuthError(error.message || 'Login failed. Please try again.');
         }

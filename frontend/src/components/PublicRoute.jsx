@@ -41,7 +41,7 @@ function PublicRoute({ children }) {
     }
 
     if (status === 'authenticated') {
-        return <Navigate to="/dashboard" replace />;
+        return <Navigate to="/" replace />;
     }
 
     return children;

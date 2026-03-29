@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -5,12 +6,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Mail } from 'lucide-react';
 import AuthLayout from '../components/auth/AuthLayout';
 import AuthTextField from '../components/auth/AuthTextField';
+import { requestPasswordReset } from '../lib/auth';
 
 const forgotSchema = z.object({
     email: z.string().email('Enter a valid email address.'),
 });
 
 function AuthForgotPassword() {
+    const [submitError, setSubmitError] = useState('');
+    const [submitSuccess, setSubmitSuccess] = useState('');
     const {
         register,
         handleSubmit,
@@ -21,8 +25,18 @@ function AuthForgotPassword() {
     });
 
     const onSubmit = async values => {
-        await new Promise(resolve => setTimeout(resolve, 150));
-        console.info('Forgot password submit', values);
+        try {
+            setSubmitError('');
+            await requestPasswordReset(values.email);
+            setSubmitSuccess(
+                'If an account exists for this email, a reset link has been sent.',
+            );
+        } catch (error) {
+            setSubmitSuccess('');
+            setSubmitError(
+                error.message || 'Unable to send reset link. Please try again.',
+            );
+        }
     };
 
     return (
@@ -39,6 +53,18 @@ function AuthForgotPassword() {
             }
         >
             <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+                {submitError ? (
+                    <div className="rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                        {submitError}
+                    </div>
+                ) : null}
+
+                {submitSuccess ? (
+                    <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
+                        {submitSuccess}
+                    </div>
+                ) : null}
+
                 <AuthTextField
                     id="forgot-email"
                     name="email"

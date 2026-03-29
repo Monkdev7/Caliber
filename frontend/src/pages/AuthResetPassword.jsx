@@ -8,6 +8,7 @@ import AuthLayout from '../components/auth/AuthLayout';
 import AuthTextField from '../components/auth/AuthTextField';
 import PasswordStrength from '../components/auth/PasswordStrength';
 import { passwordSchema } from '../lib/authValidation';
+import { resetPassword } from '../lib/auth';
 
 const resetSchema = z
     .object({
@@ -21,6 +22,8 @@ const resetSchema = z
 
 function AuthResetPassword() {
     const [showPassword, setShowPassword] = useState(false);
+    const [submitError, setSubmitError] = useState('');
+    const [isComplete, setIsComplete] = useState(false);
     const [params] = useSearchParams();
     const token = params.get('token');
     const {
@@ -36,8 +39,20 @@ function AuthResetPassword() {
     const passwordValue = watch('password', '');
 
     const onSubmit = async values => {
-        await new Promise(resolve => setTimeout(resolve, 150));
-        console.info('Reset password submit', values, token);
+        if (!token) {
+            setSubmitError('Reset token missing or expired. Please request a new link.');
+            return;
+        }
+
+        try {
+            setSubmitError('');
+            await resetPassword(token, values.password);
+            setIsComplete(true);
+        } catch (error) {
+            setSubmitError(
+                error.message || 'Unable to reset password. Please request a new link.',
+            );
+        }
     };
 
     return (
@@ -56,6 +71,21 @@ function AuthResetPassword() {
             {!token ? (
                 <div className="mb-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
                     Reset token missing or expired. Please request a new link.
+                </div>
+            ) : null}
+
+            {submitError ? (
+                <div className="mb-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                    {submitError}
+                </div>
+            ) : null}
+
+            {isComplete ? (
+                <div className="space-y-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-4 text-sm text-emerald-200">
+                    <p>Password updated successfully. You can now sign in.</p>
+                    <Link className="auth-link" to="/login">
+                        Go to sign in
+                    </Link>
                 </div>
             ) : null}
 
@@ -96,7 +126,11 @@ function AuthResetPassword() {
 
                 <PasswordStrength password={passwordValue} />
 
-                <button className="auth-button" type="submit" disabled={isSubmitting}>
+                <button
+                    className="auth-button"
+                    type="submit"
+                    disabled={isSubmitting || !token || isComplete}
+                >
                     {isSubmitting ? (
                         <span className="flex items-center justify-center gap-2">
                             <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" />

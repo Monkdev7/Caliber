@@ -1,5 +1,10 @@
 import authService from '../services/authService.js';
+import {
+    sendResetEmail,
+    isEmailServiceConfigured,
+} from '../services/emailService.js';
 import { setAuthCookies, clearAuthCookies } from '../utils/cookies.js';
+import AppError from '../utils/appError.js';
 
 class AuthController {
     async signup(req, res, next) {
@@ -115,22 +120,63 @@ class AuthController {
         }
     }
 
-    async forgotPassword(req, res) {
-        res.status(503).json({
-            success: false,
-            message:
-                'Password reset emails are temporarily disabled. Please try again later.',
-        });
+    async forgotPassword(req, res, next) {
+        try {
+            const { email } = req.body;
+            const devLinkEnabled = process.env.ENABLE_DEV_RESET_LINK === 'true';
+            const emailConfigured = isEmailServiceConfigured();
+
+            if (!emailConfigured && !devLinkEnabled) {
+                throw new AppError(
+                    'Password reset email is not configured on this server.',
+                    503,
+                );
+            }
+
+            const resetData = await authService.createResetToken(email);
+            let emailResult = null;
+            if (resetData) {
+                emailResult = await sendResetEmail({
+                    to: resetData.user.email,
+                    token: resetData.rawToken,
+                });
+            }
+
+            const includeResetUrl = devLinkEnabled && Boolean(emailResult?.resetUrl);
+
+            res.status(200).json({
+                success: true,
+                message:
+                    'If an account exists for that email, a password reset link has been sent.',
+                ...(includeResetUrl
+                    ? {
+                        data: {
+                            resetUrl: emailResult.resetUrl,
+                            delivered: Boolean(emailResult.delivered),
+                        },
+                    }
+                    : {}),
+            });
+        } catch (error) {
+            next(error);
+        }
     }
 
-    async resetPassword(req, res) {
-        clearAuthCookies(res);
+    async resetPassword(req, res, next) {
+        try {
+            const { token, password } = req.body;
+            await authService.resetPassword({ token, password });
 
-        res.status(503).json({
-            success: false,
-            message:
-                'Password reset is temporarily disabled. Please try again later.',
-        });
+            clearAuthCookies(res);
+
+            res.status(200).json({
+                success: true,
+                message:
+                    'Password updated successfully. Please sign in with your new password.',
+            });
+        } catch (error) {
+            next(error);
+        }
     }
 }
 

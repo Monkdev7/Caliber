@@ -191,6 +191,11 @@ class AuthService {
             throw new AppError('Reset token and new password are required', 400);
         }
 
+        const normalizedToken = String(token).trim();
+        if (!normalizedToken) {
+            throw new AppError('Reset token and new password are required', 400);
+        }
+
         const passwordIssues = getPasswordIssues(password);
         if (passwordIssues.length) {
             throw new AppError(
@@ -199,7 +204,7 @@ class AuthService {
             );
         }
 
-        const hashedToken = hashToken(token);
+        const hashedToken = hashToken(normalizedToken);
 
         const user = await User.findOne({
             passwordResetTokenHash: hashedToken,

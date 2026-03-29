@@ -37,8 +37,8 @@ function AuthSignup() {
       setAuthError('');
       await signup(values.fullName, values.email, values.password);
 
-      // Redirect to dashboard after successful signup
-      navigate('/dashboard', { replace: true });
+      // Redirect to home page after successful signup
+      navigate('/', { replace: true });
     } catch (error) {
       setAuthError(error.message || 'Signup failed. Please try again.');
     }
